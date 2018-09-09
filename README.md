@@ -13,9 +13,8 @@ A neighborhood watch for testing on GitHub.
 
 ## Getting Started
 1. Installing the project
-
-    i. `cd $HOME/go`
-    ii. `go get -u -v github.com/mccurdyc/neighbor`
+    1. `cd $HOME/go`
+    2. `go get -u -v github.com/mccurdyc/neighbor`
 2. Installing dependencies
     ```
     dep ensure -v
