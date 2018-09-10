@@ -1,15 +1,8 @@
 {
   "access_token": "1234567890abcdefghijklmnopqrstuvwxyz",
-  "repository": {
-    "query": {
-      "user": "mccurdyc",
-      "language": "golang",
-      "stars": 1
-    }
-  },
-  "code": {
-    "query": {
-      "file": "README.md"
-    }
+  "search_type": "repository",
+  "query": {
+    "user": "gkapfham",
+    "language": "python"
   }
 }

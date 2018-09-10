@@ -21,8 +21,10 @@ func main() {
 	}
 
 	ctx := context.Background()
-	ghClient := github.Connect(ctx, cfg.Contents.AccessToken)
+	svc := github.NewSearchService(github.Connect(ctx, cfg.Contents.AccessToken))
+	res, resp, err := svc.Search(ctx, cfg.Contents.SearchType, cfg.Contents.Query, nil)
 
-	// list repositories based on config.yml
-	res, _, err := ghClient.Search.Code(ctx, "", nil)
+	fmt.Println(res)
+	fmt.Println(resp)
+	fmt.Println(err)
 }
