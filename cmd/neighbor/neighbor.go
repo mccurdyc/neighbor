@@ -1,20 +1,28 @@
 package main
 
 import (
+	"context"
+	"flag"
 	"fmt"
 	"os"
 
-	"github.com/spf13/viper"
+	"github.com/mccurdyc/neighbor/pkg/config"
+	"github.com/mccurdyc/neighbor/pkg/github"
 )
 
 func main() {
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath("../..")
+	fp := flag.String("filepath", "config.yml", "absolute filepath to config [default: \"$(PWD)/config.yml\"].")
 
-	err := viper.ReadInConfig()
+	cfg := config.New(*fp)
+	err := cfg.Parse()
 	if err != nil {
-		fmt.Printf("error loading config file: %+v\n", err)
+		fmt.Printf("error parsing config file at (%s): %+v\n", *fp, err)
 		os.Exit(1)
 	}
+
+	ctx := context.Background()
+	ghClient := github.Connect(ctx, cfg.Contents.AccessToken)
+
+	// list repositories based on config.yml
+	res, _, err := ghClient.Search.Code(ctx, "", nil)
 }

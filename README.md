@@ -16,9 +16,17 @@ A neighborhood watch for testing on GitHub.
     1. `cd $HOME/go`
     2. `go get -u -v github.com/mccurdyc/neighbor`
 2. Installing dependencies
-    ```
+    ```bash
     dep ensure -v
     ```
+3. Generate a [Personal Access Token on GitHub](https://github.com/settings/tokens)
+    + Add generated token token to config file
+      ```json
+      {
+        "access_token": "1234567890abcdefghijklmnopqrstuvwxyz",
+        ...
+      }
+      ```
 
 ## License
 

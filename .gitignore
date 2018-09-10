@@ -3,3 +3,4 @@ vendor/
 .env
 junk
 notes.md
+config.yml
