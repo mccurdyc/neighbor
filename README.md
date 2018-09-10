@@ -27,6 +27,10 @@ A neighborhood watch for testing on GitHub.
         ...
       }
       ```
+4. Run neighbor
+    ```bash
+    make run
+    ```
 
 ## License
 
