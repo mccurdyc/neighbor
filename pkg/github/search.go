@@ -58,25 +58,27 @@ func (s *SearchService) Search(ctx context.Context, t string, q []byte, opts *gi
 		if err != nil {
 			return nil, nil, err
 		}
+		break
 	case "code":
 		query = &CodeQuery{}
 		err := json.Unmarshal(q, query)
 		if err != nil {
 			return nil, nil, err
 		}
+		break
 	default:
 		return nil, nil, fmt.Errorf("search type not accepted %s", t)
 	}
 
 	switch d := query.(type) {
-	case RepositoryQuery:
+	case *RepositoryQuery:
 		qStr := buildQuery(d)
 		return s.Client.Search.Repositories(ctx, qStr, opts)
-	case CodeQuery:
+	case *CodeQuery:
 		qStr := buildQuery(d)
 		return s.Client.Search.Code(ctx, qStr, opts)
 	default:
-		return nil, nil, fmt.Errorf("search type not accepted %q", d)
+		return nil, nil, fmt.Errorf("query type not found %q", d)
 	}
 }
 
@@ -84,9 +86,9 @@ func (s *SearchService) Search(ctx context.Context, t string, q []byte, opts *gi
 // TODO(B): continue adding parameters to the query
 func buildQuery(q interface{}) string {
 	switch d := q.(type) {
-	case RepositoryQuery:
+	case *RepositoryQuery:
 		return fmt.Sprintf("%s user:%s language:%s stars:%d", d.Other, d.User, d.Language, d.Stars)
-	case CodeQuery:
+	case *CodeQuery:
 		return fmt.Sprintf("%s file:%s", d.Other, d.File)
 	default:
 		return ""
