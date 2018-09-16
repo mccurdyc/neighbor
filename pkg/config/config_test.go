@@ -1,10 +1,18 @@
 package config
 
 import (
+	"bytes"
+	"encoding/json"
 	"io"
 	"strings"
 	"testing"
 )
+
+func compareContentsFields(a, b Contents) bool {
+	return a.AccessToken != b.AccessToken ||
+		a.SearchType != b.SearchType ||
+		!bytes.Equal(a.Query, b.Query)
+}
 
 func Test_parse(t *testing.T) {
 	cases := []struct {
@@ -23,9 +31,9 @@ func Test_parse(t *testing.T) {
 														}`),
 			d: &Contents{},
 			expected: Contents{
-				AccessToken: "1123abc",
+				AccessToken: "123abc",
 				SearchType:  "abc",
-				Query:       []byte("abc"),
+				Query:       json.RawMessage(`"abc"`),
 			},
 			expectedErr: nil,
 		},
@@ -35,9 +43,11 @@ func Test_parse(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			actualErr := parse(c.r, c.d)
 
-			// we should switch on type, cast to type and compare values
-			if actualErr != c.expectedErr {
-				t.Errorf("\tACTUAL: %+v\n\tEXPECTED: %+v\n\tACTUAL ERROR: %+v\n\tEXPECTED ERROR: %+v\n", c.d, c.expected, actualErr, c.expectedErr)
+			switch c.d.(type) {
+			case *Contents:
+				if actualErr != c.expectedErr || compareContentsFields(*c.d.(*Contents), c.expected.(Contents)) {
+					t.Errorf("\n\tACTUAL: %+v\n\tEXPECTED: %+v\n\tACTUAL ERROR: %+v\n\tEXPECTED ERROR: %+v\n", c.d, c.expected, actualErr, c.expectedErr)
+				}
 			}
 		})
 	}
