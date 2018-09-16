@@ -11,13 +11,7 @@ import (
 type Contents struct {
 	AccessToken string          `json:"access_token"`
 	SearchType  string          `json:"search_type"`
-	Query       json.RawMessage `json:"query"`
-	// Code        struct {
-	// 	Query github.CodeQuery `json:"query"`
-	// } `json:"code"`
-	// Repository struct {
-	// 	Query github.RepositoryQuery `json:"query"`
-	// } `json:"repository"`
+	Query       json.RawMessage `json:"query"` // RawMessage allows us to handle parsing this bit later
 }
 
 // Config specifies information about the config file used for performing the experiment.
@@ -41,12 +35,12 @@ func (cfg *Config) Parse() error {
 	}
 	defer f.Close()
 
-	var c interface{}
+	c := &Contents{}
 	if err := parse(f, c); err != nil {
 		return err
 	}
 
-	cfg.Contents = c.(*Contents)
+	cfg.Contents = c
 
 	return nil
 }

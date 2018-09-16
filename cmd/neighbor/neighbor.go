@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	fp := flag.String("filepath", "config.yml", "absolute filepath to config [default: \"$(PWD)/config.yml\"].")
+	fp := flag.String("filepath", "config.json", "absolute filepath to config [default: \"$(PWD)/config.json\"].")
 
 	cfg := config.New(*fp)
 	err := cfg.Parse()
