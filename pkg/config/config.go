@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"os"
 )
@@ -32,7 +33,7 @@ func New(fp string) *Config {
 	}
 }
 
-// Parse parses the contents of the config file specified by the Config object.
+// Parse opens a file and calls a private `parse` method.
 func (cfg *Config) Parse() error {
 	f, err := os.Open(cfg.FilePath)
 	if err != nil {
@@ -40,15 +41,22 @@ func (cfg *Config) Parse() error {
 	}
 	defer f.Close()
 
-	b, err := ioutil.ReadAll(f)
-
-	content := &Contents{}
-	err = json.Unmarshal(b, content)
-	if err != nil {
+	var c interface{}
+	if err := parse(f, c); err != nil {
 		return err
 	}
 
-	cfg.Contents = content
+	cfg.Contents = c.(*Contents)
+
+	return nil
+}
+
+func parse(f io.Reader, d interface{}) error {
+	b, err := ioutil.ReadAll(f)
+
+	if err = json.Unmarshal(b, d); err != nil {
+		return err
+	}
 
 	return nil
 }
