@@ -5,6 +5,8 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+
+	"github.com/prometheus/common/log"
 )
 
 // Contents contains the contents of the parsed config file.
@@ -28,21 +30,23 @@ func New(fp string) *Config {
 }
 
 // Parse opens a file and calls a private `parse` method.
-func (cfg *Config) Parse() error {
+func (cfg *Config) Parse() {
 	f, err := os.Open(cfg.FilePath)
 	if err != nil {
-		return err
+		log.Errorf("error opening config file %+v", err)
+		return
 	}
 	defer f.Close()
 
 	c := &Contents{}
 	if err := parse(f, c); err != nil {
-		return err
+		log.Errorf("error parsing config file %+v", err)
+		return
 	}
 
 	cfg.Contents = c
 
-	return nil
+	return
 }
 
 func parse(f io.Reader, d interface{}) error {

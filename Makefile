@@ -1,6 +1,10 @@
 default: build
 
+setup:
+	go install github.com/golang/dep/cmd/dep
+
 build:
+	dep ensure
 	go fmt ./...
 	go build -o bin/neighbor cmd/neighbor/neighbor.go
 
@@ -9,7 +13,8 @@ install: build
 
 run: build
 	./bin/neighbor -filepath $(PWD)/config.yml
+
 test:
 	go test ./...
 
-.PHONY: build install test
+.PHONY: build install setup run test
