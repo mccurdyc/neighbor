@@ -5,7 +5,7 @@ A neighborhood watch for testing on GitHub.
 
 ## Requirements
 + [Go](https://golang.org/dl/)
-    1. `mkir $HOME/go`
+    1. `mkdir $HOME/go`
 
 ## Getting Started
 1. Installing the project
