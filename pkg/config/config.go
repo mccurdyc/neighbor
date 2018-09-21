@@ -1,12 +1,15 @@
 package config
 
 import (
+	// stdlib
 	"encoding/json"
 	"io"
 	"io/ioutil"
 	"os"
 
 	"github.com/prometheus/common/log"
+	// external
+	// internal
 )
 
 // Contents contains the contents of the parsed config file.

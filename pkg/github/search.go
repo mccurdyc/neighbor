@@ -1,12 +1,15 @@
 package github
 
 import (
-	"context"
+	// stdlib
 	"encoding/json"
 	"fmt"
 
+	// external
 	"github.com/google/go-github/github"
-	log "github.com/sirupsen/logrus"
+
+	// internal
+	"github.com/mccurdyc/neighbor/pkg/neighbor"
 )
 
 // RepositoryQuery contains all of the supported fields in a GitHub repository query
@@ -49,7 +52,7 @@ func NewSearchService(c *github.Client) *SearchService {
 // Search is a wrapper for the GitHub library search functionality, but where we can
 // build the search queries.
 // TODO(D): continue adding other search options
-func (s *SearchService) Search(ctx context.Context, t string, q []byte, opts *github.SearchOptions) (interface{}, *github.Response) {
+func (s *SearchService) Search(ctx neighbor.Ctx, t string, q []byte, opts *github.SearchOptions) (interface{}, *github.Response) {
 	var query interface{}
 
 	switch t {
@@ -57,7 +60,7 @@ func (s *SearchService) Search(ctx context.Context, t string, q []byte, opts *gi
 		query = &RepositoryQuery{}
 		err := json.Unmarshal(q, query)
 		if err != nil {
-			log.Error("error unmarshalling into RepositoryQuery")
+			ctx.Logger.Error("error unmarshalling into RepositoryQuery")
 			return nil, nil
 		}
 		break
@@ -65,32 +68,32 @@ func (s *SearchService) Search(ctx context.Context, t string, q []byte, opts *gi
 		query = &CodeQuery{}
 		err := json.Unmarshal(q, query)
 		if err != nil {
-			log.Error("error unmarshalling into CodeQuery")
+			ctx.Logger.Error("error unmarshalling into CodeQuery")
 			return nil, nil
 		}
 		break
 	default:
-		log.Info("query type not accepted")
+		ctx.Logger.Info("query type not accepted")
 		return nil, nil
 	}
 
 	switch d := query.(type) {
 	case *RepositoryQuery:
 		qStr := buildQuery(d)
-		res, resp, err := s.Client.Search.Repositories(ctx, qStr, opts)
+		res, resp, err := s.Client.Search.Repositories(ctx.Context, qStr, opts)
 		if err != nil {
-			log.Error("error searching for repositories")
+			ctx.Logger.Error("error searching for repositories")
 		}
 		return res, resp
 	case *CodeQuery:
 		qStr := buildQuery(d)
-		res, resp, err := s.Client.Search.Code(ctx, qStr, opts)
+		res, resp, err := s.Client.Search.Code(ctx.Context, qStr, opts)
 		if err != nil {
-			log.Error("error searching for code")
+			ctx.Logger.Error("error searching for code")
 		}
 		return res, resp
 	default:
-		log.Infof("query type not found %q", d)
+		ctx.Logger.Infof("query type not found %q", d)
 		return nil, nil
 	}
 }

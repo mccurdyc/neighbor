@@ -1,10 +1,13 @@
 package github
 
 import (
+	// stdlib
 	"context"
 
+	// external
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
+	// internal
 )
 
 // Connect returns an authenticated Github client.

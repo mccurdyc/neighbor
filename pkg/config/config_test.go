@@ -1,11 +1,14 @@
 package config
 
 import (
+	// stdlib
 	"bytes"
 	"encoding/json"
 	"io"
 	"strings"
 	"testing"
+	// external
+	// internal
 )
 
 func compareContentsFields(a, b Contents) bool {
