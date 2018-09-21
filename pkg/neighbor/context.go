@@ -11,14 +11,14 @@ import (
 // This does NOT satisfice the context.Context interface (https://golang.org/pkg/context/#Context),
 // therefore, it cannot be used as a context for methods or functions requiring a context.Context.
 type Ctx struct {
-	Config        config.Config     // the query config created by the user
+	Config        *config.Config    // the query config created by the user
 	ProjectDirMap map[string]string // key: project name, value: absolute path to directory
 	TestCmd       exec.Cmd          // external project test command
 }
 
 // NewCtx creates a pointer to a new neighbor context that contains the parsed config
 // object.
-func NewCtx(cfg config.Config) *Ctx {
+func NewCtx(cfg *config.Config) *Ctx {
 	m := make(map[string]string)
 
 	return &Ctx{
