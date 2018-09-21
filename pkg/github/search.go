@@ -100,7 +100,9 @@ func (s *SearchService) Search(ctx context.Context, t string, q []byte, opts *gi
 func buildQuery(q interface{}) string {
 	switch d := q.(type) {
 	case *RepositoryQuery:
-		return fmt.Sprintf("%s user:%s language:%s stars:%d", d.Other, d.User, d.Language, d.Stars)
+		// FIXME: this needs dynamically built
+		// return fmt.Sprintf("%s user:%s language:%s stars:%d", d.Other, d.User, d.Language, d.Stars)
+		return fmt.Sprintf("%s user:%s", d.Other, d.User)
 	case *CodeQuery:
 		return fmt.Sprintf("%s file:%s", d.Other, d.File)
 	default:
