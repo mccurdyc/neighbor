@@ -18,10 +18,10 @@ import (
 // therefore, it cannot be used as a context for methods or functions requiring a context.Context.
 type Ctx struct {
 	Config        *config.Config // the query config created by the user
-	Context       *context.Context
+	Context       context.Context
 	Logger        *log.Logger       // the logger to be used throughout the project
 	ProjectDirMap map[string]string // key: project name, value: absolute path to directory
-	TestCmd       exec.Cmd          // external project test command
+	TestCmd       *exec.Cmd         // external project test command
 }
 
 // NewCtx creates a pointer to a new neighbor context that contains the parsed config
@@ -31,7 +31,8 @@ func NewCtx(context context.Context, cfg *config.Config) *Ctx {
 
 	return &Ctx{
 		Config:        cfg,
-		Context:       &context,
+		Context:       context,
+		Logger:        log.New(),
 		ProjectDirMap: m,
 	}
 }

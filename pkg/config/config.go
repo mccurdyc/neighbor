@@ -6,6 +6,8 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
+	"strings"
 
 	"github.com/prometheus/common/log"
 	// external
@@ -17,6 +19,9 @@ type Contents struct {
 	AccessToken string          `json:"access_token"`
 	SearchType  string          `json:"search_type"`
 	Query       json.RawMessage `json:"query"` // RawMessage allows us to handle parsing this bit later
+
+	TestCmdStr string `json:"external_test_command"`
+	TestCmd    *exec.Cmd
 }
 
 // Config specifies information about the config file used for performing the experiment.
@@ -48,6 +53,12 @@ func (cfg *Config) Parse() {
 	}
 
 	cfg.Contents = c
+
+	// set external test command
+	if len(cfg.Contents.TestCmdStr) != 0 {
+		s := strings.Split(cfg.Contents.TestCmdStr, " ")
+		cfg.Contents.TestCmd = exec.Command(s[0], s[1:]...)
+	}
 
 	return
 }

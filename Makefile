@@ -6,7 +6,7 @@ setup:
 build:
 	dep ensure
 	go fmt ./...
-	go build -o bin/neighbor cmd/neighbor/neighbor.go
+	go build -o bin/neighbor cmd/neighbor/main.go
 
 install: build
 	cp bin/neighbor /usr/local/bin

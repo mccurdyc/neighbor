@@ -6,7 +6,6 @@ import (
 
 	// external
 	"github.com/google/go-github/github"
-	log "github.com/sirupsen/logrus"
 	git "gopkg.in/src-d/go-git.v4"
 
 	// internal
@@ -37,16 +36,17 @@ func CloneFromResult(ctx *neighbor.Ctx, c *github.Client, d interface{}) {
 				return
 			}
 
-			log.Infof("created temp directory: %s", dir)
+			ctx.Logger.Infof("created temp directory: %s", dir)
 
 			_, err = git.PlainClone(dir, false, &git.CloneOptions{
 				URL: r.GetCloneURL(),
 			})
 			if err != nil {
+				ctx.Logger.Errorf("failed to clone project %s with error %+v", *r.Name, err)
 				return
 			}
 
-			log.Infof("cloned: %s", r.GetCloneURL())
+			ctx.Logger.Infof("cloned: %s", r.GetCloneURL())
 
 			ctx.ProjectDirMap[*r.Name] = dir
 		}

@@ -52,7 +52,7 @@ func NewSearchService(c *github.Client) *SearchService {
 // Search is a wrapper for the GitHub library search functionality, but where we can
 // build the search queries.
 // TODO(D): continue adding other search options
-func (s *SearchService) Search(ctx neighbor.Ctx, t string, q []byte, opts *github.SearchOptions) (interface{}, *github.Response) {
+func (s *SearchService) Search(ctx *neighbor.Ctx, t string, q []byte, opts *github.SearchOptions) (interface{}, *github.Response) {
 	var query interface{}
 
 	switch t {
