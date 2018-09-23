@@ -316,6 +316,7 @@
     "github.com/sirupsen/logrus",
     "golang.org/x/oauth2",
     "gopkg.in/src-d/go-git.v4",
+    "gopkg.in/src-d/go-git.v4/plumbing/transport/ssh",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

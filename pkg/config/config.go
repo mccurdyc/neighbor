@@ -17,6 +17,7 @@ import (
 // Contents contains the contents of the parsed config file.
 type Contents struct {
 	AccessToken string          `json:"access_token"`
+	SSHKey      string          `json:"ssh_key"`
 	SearchType  string          `json:"search_type"`
 	Query       json.RawMessage `json:"query"` // RawMessage allows us to handle parsing this bit later
 

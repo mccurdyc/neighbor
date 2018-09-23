@@ -20,9 +20,11 @@ func RunTests(ctx *neighbor.Ctx) {
 			continue
 		}
 
-		err = ctx.TestCmd.Run()
-		if err != nil {
-			ctx.Logger.Error(err)
+		ctx.TestCmd.Stdout = os.Stdout
+		ctx.TestCmd.Stderr = os.Stderr
+
+		if err := ctx.TestCmd.Run(); err != nil {
+			ctx.Logger.Errorf("failed to run test command with error %+v", err)
 			continue
 		}
 	}

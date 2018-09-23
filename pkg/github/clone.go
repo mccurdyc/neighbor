@@ -3,10 +3,12 @@ package github
 import (
 	// stdlib
 	"io/ioutil"
+	"os"
 
 	// external
 	"github.com/google/go-github/github"
 	git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
 
 	// internal
 	"github.com/mccurdyc/neighbor/pkg/neighbor"
@@ -38,8 +40,16 @@ func CloneFromResult(ctx *neighbor.Ctx, c *github.Client, d interface{}) {
 
 			ctx.Logger.Infof("created temp directory: %s", dir)
 
+			sshAuth, err := ssh.NewSSHAgentAuth("git")
+			if err != nil {
+				ctx.Logger.Errorf("failed to create new ssh agent with error %+v", err)
+				return
+			}
+
 			_, err = git.PlainClone(dir, false, &git.CloneOptions{
-				URL: r.GetCloneURL(),
+				Auth:     sshAuth,
+				URL:      r.GetSSHURL(),
+				Progress: os.Stdout,
 			})
 			if err != nil {
 				ctx.Logger.Errorf("failed to clone project %s with error %+v", *r.Name, err)
