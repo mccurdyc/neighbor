@@ -24,6 +24,7 @@ func main() {
 	svc := github.NewSearchService(github.Connect(ctx.Context, cfg.Contents.AccessToken))
 	res, resp := svc.Search(ctx, cfg.Contents.SearchType, cfg.Contents.Query, nil)
 	ctx.Logger.Infof("github search response: %+v", resp)
+	ctx.Logger.Infof("github search result: %+v", res)
 
 	// populates the context's ProjectDirMap with cloned projects and where they were cloned
 	github.CloneFromResult(ctx, svc.Client, res)
