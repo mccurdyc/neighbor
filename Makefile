@@ -4,7 +4,6 @@ setup:
 	go install github.com/golang/dep/cmd/dep
 
 build:
-	dep ensure
 	go fmt ./...
 	go build -o bin/neighbor cmd/neighbor/main.go
 
