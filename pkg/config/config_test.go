@@ -2,8 +2,6 @@ package config
 
 import (
 	// stdlib
-	"bytes"
-	"encoding/json"
 	"io"
 	"strings"
 	"testing"
@@ -14,7 +12,7 @@ import (
 func compareContentsFields(a, b Contents) bool {
 	return a.AccessToken != b.AccessToken ||
 		a.SearchType != b.SearchType ||
-		!bytes.Equal(a.Query, b.Query)
+		a.Query != b.Query
 }
 
 func Test_parse(t *testing.T) {
@@ -36,7 +34,7 @@ func Test_parse(t *testing.T) {
 			expected: Contents{
 				AccessToken: "123abc",
 				SearchType:  "abc",
-				Query:       json.RawMessage(`"abc"`),
+				Query:       "abc",
 			},
 			expectedErr: nil,
 		},

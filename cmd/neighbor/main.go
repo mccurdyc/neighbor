@@ -32,17 +32,20 @@ func main() {
 
 	svc := github.NewSearchService(github.Connect(ctx.Context, cfg.Contents.AccessToken))
 	res, resp := svc.Search(ctx, cfg.Contents.SearchType, cfg.Contents.Query, nil)
-	ctx.Logger.Infof("github search response: %+v", resp)
-	ctx.Logger.Infof("github search result: %+v", res)
+	ctx.Logger.Debugf("github search response: %+v", resp)
+	ctx.Logger.Debugf("github search result: %+v", res)
 
 	// populates the context's ProjectDirMap with cloned projects and where they were cloned
 	github.CloneFromResult(ctx, svc.Client, res)
 
+	// neighbor.SetNeighborDir(ctx)
+	// neighbor.SetGOROOT(ctx)
 	neighbor.SetTestCmd(ctx)
-	neighbor.SwitchGoCmd(ctx)
 
+	// switch go command to go binary with cover flag always enabled
+	// neighbor.SwitchGoCmd(ctx)
 	// defer setting the go binary back to normal until after finishing
-	defer neighbor.CleanupGoCmd(ctx)
+	// defer neighbor.CleanupGoCmd(ctx)
 
 	external.RunTests(ctx)
 }
