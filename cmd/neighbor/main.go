@@ -38,14 +38,7 @@ func main() {
 	// populates the context's ProjectDirMap with cloned projects and where they were cloned
 	github.CloneFromResult(ctx, svc.Client, res)
 
-	// neighbor.SetNeighborDir(ctx)
-	// neighbor.SetGOROOT(ctx)
 	neighbor.SetTestCmd(ctx)
-
-	// switch go command to go binary with cover flag always enabled
-	// neighbor.SwitchGoCmd(ctx)
-	// defer setting the go binary back to normal until after finishing
-	// defer neighbor.CleanupGoCmd(ctx)
 
 	external.RunTests(ctx)
 }
