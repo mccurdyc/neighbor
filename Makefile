@@ -26,4 +26,4 @@ run: build
 test:
 	go test ./...
 
-.PHONY: build install setup run test clean junk
+.PHONY: build install setup run test clean
