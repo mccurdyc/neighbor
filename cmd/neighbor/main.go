@@ -2,10 +2,12 @@ package main
 
 import (
 	// stdlib
+
 	"context"
 	"flag"
 
 	// external
+	log "github.com/sirupsen/logrus"
 
 	// internal
 	"github.com/mccurdyc/neighbor/pkg/config"
@@ -19,15 +21,24 @@ func main() {
 
 	cfg := config.New(*fp)
 	cfg.Parse()
-	ctx := neighbor.NewCtx(context.Background(), cfg)
+
+	// create a context object that will be used for the life of the program and passed around
+	ctx := &neighbor.Ctx{
+		Config:        cfg,
+		Context:       context.Background(),
+		Logger:        log.New(),
+		ProjectDirMap: make(map[string]string),
+	}
 
 	svc := github.NewSearchService(github.Connect(ctx.Context, cfg.Contents.AccessToken))
 	res, resp := svc.Search(ctx, cfg.Contents.SearchType, cfg.Contents.Query, nil)
-	ctx.Logger.Infof("github search response: %+v", resp)
+	ctx.Logger.Debugf("github search response: %+v", resp)
+	ctx.Logger.Debugf("github search result: %+v", res)
 
 	// populates the context's ProjectDirMap with cloned projects and where they were cloned
 	github.CloneFromResult(ctx, svc.Client, res)
 
-	ctx.TestCmd = cfg.Contents.TestCmd
+	neighbor.SetTestCmd(ctx)
+
 	external.RunTests(ctx)
 }

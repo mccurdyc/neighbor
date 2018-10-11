@@ -40,7 +40,7 @@ func CloneFromResult(ctx *neighbor.Ctx, c *github.Client, d interface{}) {
 
 			ctx.Logger.Infof("created temp directory: %s", dir)
 
-			sshAuth, err := ssh.NewSSHAgentAuth("git")
+			sshAuth, err := ssh.NewSSHAgentAuth("git") // username has to be "git" - https://github.com/src-d/go-git/issues/637
 			if err != nil {
 				ctx.Logger.Errorf("failed to create new ssh agent with error %+v", err)
 				return
