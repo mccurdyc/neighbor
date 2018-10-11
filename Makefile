@@ -1,17 +1,11 @@
 default: build
 
-GOCMD := $(shell which go)
-GOBAK := $(GOCMD).bak
-
 setup:
-	@echo GOCMD is set to: $(GOCMD)
-	@echo GOBAK is set to: $(GOBAK)
 	go install github.com/golang/dep/cmd/dep
-	sudo cp $(GOCMD) $(GOBAK)
-	sudo cp $(PWD)/bin/go-cover $(GOCMD)
+	sudo ./build/setup.sh
 
 clean:
-	sudo mv $(GOBAK) $(GOCMD)
+	sudo ./build/clean.sh
 
 build:
 	go fmt ./...
