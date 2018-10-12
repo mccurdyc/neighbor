@@ -2,10 +2,11 @@ package github
 
 import (
 	// stdlib
-	"encoding/json"
-	"fmt"
 
 	// external
+
+	"strings"
+
 	"github.com/google/go-github/github"
 
 	// internal
@@ -17,6 +18,7 @@ import (
 //		+ GitHub API Docs: https://developer.github.com/v3/search/#search-repositories
 //		+ GitHub Search Repository Docs: https://help.github.com/articles/searching-for-repositories/
 // TODO(A): add the additional supported fields with the appropriate types
+// for now, we will leave this, but they will be replaced by the GitHub query string
 type RepositoryQuery struct {
 	Other string `json:"other"`
 
@@ -30,6 +32,7 @@ type RepositoryQuery struct {
 //		+ GitHub API Docs: https://developer.github.com/v3/search/#search-code
 //		+ GitHub Search Repository Docs: https://help.github.com/articles/searching-code/
 // TODO(A): add the additional supported fields with the appropriate types
+// for now, we will leave this, but they will be replaced by the GitHub query string
 type CodeQuery struct {
 	Other string `json:"other"`
 
@@ -52,63 +55,28 @@ func NewSearchService(c *github.Client) *SearchService {
 // Search is a wrapper for the GitHub library search functionality, but where we can
 // build the search queries.
 // TODO(D): continue adding other search options
-func (s *SearchService) Search(ctx *neighbor.Ctx, t string, q []byte, opts *github.SearchOptions) (interface{}, *github.Response) {
-	var query interface{}
+func (s *SearchService) Search(ctx *neighbor.Ctx, t string, q string, opts *github.SearchOptions) (interface{}, *github.Response) {
+	ctx.Logger.Infof("performing GitHub search with query: %s", q)
 
-	switch t {
+	switch strings.ToLower(t) {
 	case "repository":
-		query = &RepositoryQuery{}
-		err := json.Unmarshal(q, query)
+		// TODO: do pagination on resp
+		// API Reference: https://developer.github.com/v3/search/
+		// Find repositories via various criteria. This method returns up to 100 results per page.
+		// the query needs to be '+' delimited (e.g., "simpletest+language:go+user:mccurdyc")
+		res, resp, err := s.Client.Search.Repositories(ctx.Context, q, opts)
 		if err != nil {
-			ctx.Logger.Error("error unmarshalling into RepositoryQuery")
-			return nil, nil
+			ctx.Logger.Errorf("error searching for repositories: %+v", err)
 		}
-		break
+		return res, resp
 	case "code":
-		query = &CodeQuery{}
-		err := json.Unmarshal(q, query)
+		res, resp, err := s.Client.Search.Code(ctx.Context, q, opts)
 		if err != nil {
-			ctx.Logger.Error("error unmarshalling into CodeQuery")
-			return nil, nil
-		}
-		break
-	default:
-		ctx.Logger.Info("query type not accepted")
-		return nil, nil
-	}
-
-	switch d := query.(type) {
-	case *RepositoryQuery:
-		qStr := buildQuery(d)
-		res, resp, err := s.Client.Search.Repositories(ctx.Context, qStr, opts)
-		if err != nil {
-			ctx.Logger.Error("error searching for repositories")
-		}
-		return res, resp
-	case *CodeQuery:
-		qStr := buildQuery(d)
-		res, resp, err := s.Client.Search.Code(ctx.Context, qStr, opts)
-		if err != nil {
-			ctx.Logger.Error("error searching for code")
+			ctx.Logger.Errorf("error searching for code: %+v", err)
 		}
 		return res, resp
 	default:
-		ctx.Logger.Infof("query type not found %q", d)
+		ctx.Logger.Infof("query type \"%s\" not accepted", t)
 		return nil, nil
-	}
-}
-
-// buildQuery builds the appropriate search query based on the type of query.
-// TODO(B): continue adding parameters to the query
-func buildQuery(q interface{}) string {
-	switch d := q.(type) {
-	case *RepositoryQuery:
-		// FIXME: this needs dynamically built
-		// return fmt.Sprintf("%s user:%s language:%s stars:%d", d.Other, d.User, d.Language, d.Stars)
-		return fmt.Sprintf("%s user:%s", d.Other, d.User)
-	case *CodeQuery:
-		return fmt.Sprintf("%s file:%s", d.Other, d.File)
-	default:
-		return ""
 	}
 }
