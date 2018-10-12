@@ -5,6 +5,8 @@ import (
 
 	"context"
 	"flag"
+	"fmt"
+	"os"
 
 	// external
 	log "github.com/sirupsen/logrus"
@@ -22,12 +24,28 @@ func main() {
 	cfg := config.New(*fp)
 	cfg.Parse()
 
+	l := log.New()
+
+	wd, err := os.Getwd()
+	if err != nil {
+		l.Errorf("error getting current directory: %+v", err)
+		os.Exit(1)
+	}
+
 	// create a context object that will be used for the life of the program and passed around
 	ctx := &neighbor.Ctx{
 		Config:        cfg,
 		Context:       context.Background(),
-		Logger:        log.New(),
+		Logger:        l,
+		NeighborDir:   wd,
 		ProjectDirMap: make(map[string]string),
+		ExtResultDir:  fmt.Sprintf("%s/%s", wd, "ext-results"),
+	}
+
+	err = ctx.CreateExternalResultDir()
+	if err != nil {
+		l.Errorf("error creating results directory: %+v", err)
+		os.Exit(1)
 	}
 
 	svc := github.NewSearchService(github.Connect(ctx.Context, cfg.Contents.AccessToken))

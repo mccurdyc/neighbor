@@ -2,7 +2,8 @@ package github
 
 import (
 	// stdlib
-	"io/ioutil"
+
+	"fmt"
 	"os"
 
 	// external
@@ -33,12 +34,8 @@ func CloneFromResult(ctx *neighbor.Ctx, c *github.Client, d interface{}) {
 	case *github.RepositoriesSearchResult:
 		for _, r := range t.Repositories {
 
-			dir, err := ioutil.TempDir("", *r.Name)
-			if err != nil {
-				return
-			}
-
-			ctx.Logger.Infof("created temp directory: %s", dir)
+			dir := fmt.Sprintf("%s/%s", ctx.ExtResultDir, *r.Name)
+			ctx.Logger.Infof("created directory: %s", dir)
 
 			sshAuth, err := ssh.NewSSHAgentAuth("git") // username has to be "git" - https://github.com/src-d/go-git/issues/637
 			if err != nil {

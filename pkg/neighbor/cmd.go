@@ -1,7 +1,6 @@
 package neighbor
 
 // stdlib
-
 // external
 // internal
 
