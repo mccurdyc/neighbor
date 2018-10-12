@@ -1,7 +1,6 @@
 # neighbor
 ---
-
-A neighborhood watch for testing on GitHub.
+A neighborhood watch tool for evaluating neighbors' test suite adequacy in the neighborhood, GitHub projects.
 
 ## Requirements
 + [Go](https://golang.org/dl/)
@@ -11,26 +10,26 @@ A neighborhood watch for testing on GitHub.
 1. Installing the project
     1. `cd $HOME/go`
     2. `go get -u -v github.com/mccurdyc/neighbor`
-2. Start SSH Agent and Add Keys to Agent
-    1. Start SSH Agent
-    ```
-    eval `ssh-agent -s`
-    ```
-    2. Add SSH Keys (your setup may differ, but generally you can do the following)
-    ```
-    ssh-add $HOME/.ssh/id_rsa
-    ```
-3. Run the Setup
+2. Prepare neighbor for Execution
     ```bash
     make setup
     ```
 
     The `setup` `make` target will do the following:
     1. Install `dep`
-    2. Backup YOUR installed version of `go` (`which go`) to the value returned
-      from `which go` with a file extension `.bak` appended
-    3. Move `./bin/go-cover` to `which go` to be used as the system-wide `go` command
-      + you can verify this by running `go version` after running `make setup`
+    2. Create a `config.json` file from the `sample.config.json` file
+
+      **NOTE: You still need to update the access token in the config file to use your personal access token.**
+
+      **NOTE: The setup target will check to see if you have already copied the sample.config.json to
+      config.json for execution. If you have, the setup will not overwrite the config.json file.**
+    3. Backup your installed version of `go` (`$ which go`) to the value returned
+      from `$ which go` in your shell with a file extension `.bak` appended.
+
+      **NOTE: The setup target will check to see if you have already backed up a go command. If you have,
+      the setup will not overwrite the backup.**
+    4. Move `./bin/go-cover` to `which go` to be used as the system-wide `go` command
+      + You can verify this by running `go version` after running `make setup`
           + If you see something similar to the following, then you are still
             running an officially-released version of `go`.
               ```bash
@@ -40,15 +39,23 @@ A neighborhood watch for testing on GitHub.
               ```bash
               go version devel +2afdd17e3f Mon Oct 8 19:13:38 2018 +0000 linux/amd64
               ```
-4. Generate a [Personal Access Token on GitHub](https://github.com/settings/tokens)
-    + Add generated token to the GitHub configuration file
+3. Generate a [Personal Access Token on GitHub](https://github.com/settings/tokens)
+    neighbor uses token authentication for communicating and authenticating with GitHub.
+    To read more about GitHub's token authentication, visit [this site](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/).
+
+    > You can create a personal access token and use it in place of a password when performing Git operations over HTTPS with Git on the command line or the API.
+
+    Authentication is required to both increase the [GitHub API limitations](https://godoc.org/github.com/google/go-github/github#hdr-Rate_Limiting)
+    as well as access private content (e.g., repositories, gists, etc.).
+
+    + Add the generated token to the configuration file (`config.json`).
       ```json
       {
-        "access_token": "1234567890abcdefghijklmnopqrstuvwxyz",
+        "access_token": "yourAccessToken1234567890abcdefghijklmnopqrstuvwxyz",
         ...
       }
       ```
-5. Run neighbor
+4. Performing a neighborhood analysis with neighbor
     ```bash
     make run
     ```

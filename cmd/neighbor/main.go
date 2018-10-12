@@ -34,8 +34,11 @@ func main() {
 
 	// create a context object that will be used for the life of the program and passed around
 	ctx := &neighbor.Ctx{
-		Config:        cfg,
-		Context:       context.Background(),
+		Config:  cfg,
+		Context: context.Background(),
+		GitHub: neighbor.GitHubDetails{
+			AccessToken: cfg.Contents.AccessToken,
+		},
 		Logger:        l,
 		NeighborDir:   wd,
 		ProjectDirMap: make(map[string]string),

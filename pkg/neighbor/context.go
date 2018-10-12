@@ -20,11 +20,17 @@ import (
 type Ctx struct {
 	Config        *config.Config  // the query config created by the user
 	Context       context.Context // a context object required by the GitHub SDK
-	Logger        *log.Logger     // the logger to be used throughout the project
+	GitHub        GitHubDetails
+	Logger        *log.Logger // the logger to be used throughout the project
 	NeighborDir   string
 	ProjectDirMap map[string]string // key: project name, value: absolute path to directory
 	ExtResultDir  string            // where the external projects and test results will be stored
 	TestCmd       *exec.Cmd         // external project test command
+}
+
+// GitHubDetails are GitHub-specifc details necessary throughout the project
+type GitHubDetails struct {
+	AccessToken string
 }
 
 // NewCtx creates a pointer to a new neighbor context.
