@@ -4,4 +4,5 @@ vendor/
 config.yml
 config.json
 ext-results/
+_ext-results/
 

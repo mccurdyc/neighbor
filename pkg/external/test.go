@@ -6,6 +6,7 @@ import (
 	"os"
 
 	// external
+	"github.com/google/uuid"
 
 	// internal
 	"github.com/mccurdyc/neighbor/pkg/neighbor"
@@ -18,11 +19,20 @@ func RunTests(ctx *neighbor.Ctx) {
 
 		err := os.Chdir(dir)
 		if err != nil {
-			ctx.Logger.Error(err)
+			ctx.Logger.Errorf("error changing into %s directory: %+v", name, err)
 			continue
 		}
 
-		cp := fmt.Sprintf("%s/neighbor-%s-coverprofile.out", dir, name)
+		// we need to append a globally unique identifier to the coverprofile
+		// path because a project could have multiple coverage profiles from multiple
+		// packages and we want to store them all in the root of the project with an
+		// easily-identifiable name "neighbor-projectname-coverprofile-UUID.out"
+		guuid, err := uuid.NewRandom()
+		if err != nil {
+			ctx.Logger.Errorf("error generating new random UUID: %+v", err)
+		}
+
+		cp := fmt.Sprintf("%s/neighbor-%s-coverprofile-%s.out", dir, name, guuid.String())
 
 		err = os.Setenv("COVERPROFILE_OUT_PATH", cp)
 		ctx.Logger.Infof("setting COVERPROFILE_OUT_PATH for %s to (%s)", name, cp)
