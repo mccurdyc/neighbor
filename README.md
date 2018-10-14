@@ -60,5 +60,13 @@ A neighborhood watch tool for evaluating neighbors' test suite adequacy in the n
     make run
     ```
 
+    neighbor will use the GitHub query specified in the config file to find projects
+    on GitHub. neighbor will then clone each of these projects. After cloning all
+    of the projects, neighbor will sequentially test each of the projects using the
+    test command specified in the config. neighbor will use a custom go binary
+    instead of the default go binary. This custom go binary always enables the
+    `-coverprofile` flag during `go test` and writes to a easy-to-find location
+    at the root of each project in the `_ext-results/` directory.
+
 ## License
 + [GNU General Public License Version 3](./LICENSE)
