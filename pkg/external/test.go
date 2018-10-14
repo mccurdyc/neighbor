@@ -40,10 +40,10 @@ func RunTests(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
 				ctx.Logger.Errorf("error generating new random UUID: %+v", err)
 			}
 
-			cp := fmt.Sprintf("%s/neighbor-%s-coverprofile-%s.out", dir, name, guuid.String())
+			cp := fmt.Sprintf("%s/neighbor-%s-coverprofile-%s.out", p.Directory, p.Name, guuid.String())
 
 			err = os.Setenv("COVERPROFILE_OUT_PATH", cp)
-			ctx.Logger.Infof("setting COVERPROFILE_OUT_PATH for %s to (%s)", name, cp)
+			ctx.Logger.Infof("setting COVERPROFILE_OUT_PATH for %s to (%s)", p.Name, cp)
 			if err != nil {
 				ctx.Logger.Error(err)
 				continue
