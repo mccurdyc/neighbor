@@ -2,13 +2,14 @@ package github
 
 import (
 	// stdlib
-	"io/ioutil"
+
+	"fmt"
 	"os"
 
 	// external
 	"github.com/google/go-github/github"
 	git "gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
+	"gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 
 	// internal
 	"github.com/mccurdyc/neighbor/pkg/neighbor"
@@ -33,26 +34,25 @@ func CloneFromResult(ctx *neighbor.Ctx, c *github.Client, d interface{}) {
 	case *github.RepositoriesSearchResult:
 		for _, r := range t.Repositories {
 
-			dir, err := ioutil.TempDir("", *r.Name)
-			if err != nil {
-				return
-			}
+			ctx.Logger.Debugf("%+v", r)
+			dir := fmt.Sprintf("%s/%s", ctx.ExtResultDir, *r.Name)
+			ctx.Logger.Infof("created directory: %s", dir)
 
-			ctx.Logger.Infof("created temp directory: %s", dir)
-
-			sshAuth, err := ssh.NewSSHAgentAuth("git") // username has to be "git" - https://github.com/src-d/go-git/issues/637
-			if err != nil {
-				ctx.Logger.Errorf("failed to create new ssh agent with error %+v", err)
-				return
-			}
-
-			_, err = git.PlainClone(dir, false, &git.CloneOptions{
-				Auth:     sshAuth,
-				URL:      r.GetSSHURL(),
+			_, err := git.PlainClone(dir, false, &git.CloneOptions{
+				// go-git does not yet support TokenAuth (https://godoc.org/gopkg.in/src-d/go-git.v4/plumbing/transport/http#TokenAuth)
+				// you will recieve and error similar to the following:
+				// unexpected client error: unexpected requesting ... status code: 400
+				// instead, you must use BasicAuth with your GitHub Access Token as the password
+				// and the Username can be anything.
+				Auth: &http.BasicAuth{
+					Username: "abc123", // yes, this can be anything except an empty string
+					Password: ctx.GitHub.AccessToken,
+				},
+				URL:      r.GetCloneURL(),
 				Progress: os.Stdout,
 			})
 			if err != nil {
-				ctx.Logger.Errorf("failed to clone project %s with error %+v", *r.Name, err)
+				ctx.Logger.Errorf("failed to clone project %s with error: %+v", *r.Name, err)
 				return
 			}
 
