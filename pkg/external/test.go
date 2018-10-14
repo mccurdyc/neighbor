@@ -42,6 +42,9 @@ func RunTests(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
 
 			cp := fmt.Sprintf("%s/neighbor-%s-coverprofile-%s.out", p.Directory, p.Name, guuid.String())
 
+			// I do have concerns setting an environment variable if we do end up processing
+			// projects concurrently. This environment variable could be overwritten in
+			// another goroutine.
 			err = os.Setenv("COVERPROFILE_OUT_PATH", cp)
 			ctx.Logger.Infof("setting COVERPROFILE_OUT_PATH for %s to (%s)", p.Name, cp)
 			if err != nil {
@@ -49,6 +52,9 @@ func RunTests(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
 				continue
 			}
 
+			// we can't parse the command outside of this loop because exec.Command creates
+			// a pointer to a Cmd and if you call Run() on that command, it will say
+			// that it is already processing.
 			var cmd *exec.Cmd
 			if len(ctx.TestCmd) == 1 {
 				cmd = exec.Command(ctx.TestCmd[0])
