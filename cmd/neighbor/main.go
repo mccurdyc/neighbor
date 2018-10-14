@@ -60,7 +60,18 @@ func main() {
 		},
 		Logger:       l,
 		NeighborDir:  wd,
-		ExtResultDir: fmt.Sprintf("%s/%s", wd, "ext-results"),
+		ExtResultDir: fmt.Sprintf("%s/%s", wd, "_ext-results"), // go tools handle directories prepended with '_' differently; often they ignore those directories
+	}
+
+	ll := os.Getenv("LOG_LEVEL")
+	if len(ll) == 0 {
+		ctx.Logger.SetLevel(log.InfoLevel)
+	} else {
+		ll, err := log.ParseLevel(ll)
+		if err != nil {
+			ctx.Logger.SetLevel(log.InfoLevel)
+		}
+		ctx.Logger.SetLevel(ll)
 	}
 
 	err = ctx.CreateExternalResultDir()
