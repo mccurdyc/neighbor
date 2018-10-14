@@ -7,6 +7,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 
 	// external
 	log "github.com/sirupsen/logrus"
@@ -32,17 +35,32 @@ func main() {
 		os.Exit(1)
 	}
 
+	c, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func() {
+		ch := make(chan os.Signal, 1)
+
+		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
+		defer signal.Stop(ch)
+
+		select {
+		case <-c.Done():
+		case <-ch:
+			cancel()
+		}
+	}()
+
 	// create a context object that will be used for the life of the program and passed around
 	ctx := &neighbor.Ctx{
 		Config:  cfg,
-		Context: context.Background(),
+		Context: c,
 		GitHub: neighbor.GitHubDetails{
 			AccessToken: cfg.Contents.AccessToken,
 		},
-		Logger:        l,
-		NeighborDir:   wd,
-		ProjectDirMap: make(map[string]string),
-		ExtResultDir:  fmt.Sprintf("%s/%s", wd, "ext-results"),
+		Logger:       l,
+		NeighborDir:  wd,
+		ExtResultDir: fmt.Sprintf("%s/%s", wd, "ext-results"),
 	}
 
 	err = ctx.CreateExternalResultDir()
@@ -56,10 +74,22 @@ func main() {
 	ctx.Logger.Debugf("github search response: %+v", resp)
 	ctx.Logger.Debugf("github search result: %+v", res)
 
-	// populates the context's ProjectDirMap with cloned projects and where they were cloned
-	github.CloneFromResult(ctx, svc.Client, res)
-
 	neighbor.SetTestCmd(ctx)
 
-	external.RunTests(ctx)
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+
+		ch := github.CloneFromResult(ctx, svc.Client, res)
+		external.RunTests(ctx, ch)
+
+		select {
+		case <-ctx.Context.Done():
+			return
+		}
+	}()
+
+	wg.Wait()
 }
