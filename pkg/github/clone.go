@@ -59,6 +59,8 @@ func CloneFromResult(ctx *neighbor.Ctx, c *github.Client, d interface{}) {
 			ctx.Logger.Infof("cloned: %s", r.GetCloneURL())
 
 			ctx.ProjectDirMap[*r.Name] = dir
+
+			ctx.Logger.Infof("Project Directory Map: %+v", ctx.ProjectDirMap)
 		}
 
 		return
