@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 )
 
-func collateCoverageProfiles(root string, in string, out string) error {
+func collateCoverageProfiles(root string, basename string, out string) error {
 	f, err := os.OpenFile(out, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
@@ -16,8 +16,8 @@ func collateCoverageProfiles(root string, in string, out string) error {
 
 	err = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 
-		if info.Name() == in {
-			b, err := ioutil.ReadFile(in)
+		if info.Name() == basename {
+			b, err := ioutil.ReadFile(path)
 			if err != nil {
 				return err
 			}
