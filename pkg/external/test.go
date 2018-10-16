@@ -3,6 +3,7 @@ package external
 import (
 	// stdlib
 
+	"fmt"
 	"os"
 	"os/exec"
 
@@ -15,6 +16,11 @@ import (
 
 // RunTests runs the tests of an external project using the context's TestCmd.
 func RunTests(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
+	cp, ok := os.LookupEnv("COVERPROFILE_FNAME")
+	if !ok {
+		ctx.Logger.Error("COVERPROFILE_FNAME not set and required for outputting coverage profiles")
+	}
+
 	run := func(ch <-chan github.ExternalProject) {
 		for p := range ch {
 
@@ -29,17 +35,6 @@ func RunTests(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
 				ctx.Logger.Errorf("test command cannot be empty")
 				return
 			}
-
-			// I do have concerns setting an environment variable if we do end up processing
-			// projects concurrently. This environment variable could be overwritten in
-			// another goroutine.
-			// err = os.Setenv("COVERPROFILE_OUT_PATH", p.Directory)
-			//
-			// ctx.Logger.Infof("setting COVERPROFILE_OUT_PATH for %s to (%s)", p.Name, p.Directory)
-			// if err != nil {
-			// 	ctx.Logger.Error(err)
-			// 	continue
-			// }
 
 			// we can't parse the command outside of this loop because exec.Command creates
 			// a pointer to a Cmd and if you call Run() on that command, it will say
@@ -58,6 +53,14 @@ func RunTests(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
 				ctx.Logger.Errorf("failed to run test command with error %+v", err)
 				continue
 			}
+
+			fOut := fmt.Sprintf("%s/%s-cover-profile.out", p.Directory, p.Name)
+			err = collateCoverageProfiles(p.Directory, cp, fOut)
+			if err != nil {
+				ctx.Logger.Errorf("error collating coverage profiles %+v", err)
+			}
+
+			ctx.Logger.Infof("collated coverage profiles for %s at %s", p.Name, fOut)
 		}
 
 		select {

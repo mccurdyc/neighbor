@@ -15,7 +15,7 @@ install: build
 	cp bin/neighbor /usr/local/bin
 
 run: build
-	./bin/neighbor -filepath $(PWD)/config.json
+	COVERPROFILE_FNAME="neighbor-coverprofile.out" ./bin/neighbor -filepath $(PWD)/config.json
 
 test:
 	go test ./...
