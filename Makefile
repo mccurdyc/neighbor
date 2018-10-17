@@ -2,10 +2,10 @@ default: build
 
 setup:
 	go install github.com/golang/dep/cmd/dep
-	sudo ./build/setup.sh
+	./build/setup.sh
 
 clean:
-	sudo ./build/clean.sh
+	./build/clean.sh
 
 build:
 	go fmt ./...

@@ -19,7 +19,7 @@ if [ -f $GOBAK ]; then
   echo "Not backing up go command, a backup already exists ($GOBAK)."
 else
   echo "Backing up $SYS_GOCMD to $GOBAK."
-  cp $SYS_GOCMD $GOBAK
+  sudo cp $SYS_GOCMD $GOBAK
   echo "Replacing $SYS_GOCMD with $NEIGHBOR_GOCMD."
-	cp $NEIGHBOR_GOCMD $SYS_GOCMD
+	sudo cp $NEIGHBOR_GOCMD $SYS_GOCMD
 fi
