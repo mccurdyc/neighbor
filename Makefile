@@ -2,7 +2,6 @@ default: build
 
 setup:
 	go get -u -v github.com/golang/dep/cmd/dep
-	go install github.com/golang/dep/cmd/dep
 	dep ensure -v
 	./build/setup.sh
 
