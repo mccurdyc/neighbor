@@ -2,6 +2,7 @@ default: build
 
 setup:
 	go install github.com/golang/dep/cmd/dep
+	dep ensure -v
 	./build/setup.sh
 
 clean:
