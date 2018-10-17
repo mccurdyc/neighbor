@@ -18,18 +18,14 @@ A neighborhood watch tool for evaluating neighbors' test suite adequacy in the n
     The `setup` `make` target will do the following:
     1. Install `dep`
     2. Create a `config.json` file from the `sample.config.json` file
-
-      **IMPORTANT NOTE(S):**
-      + You still need to update the access token in the config file to use your personal access token.**
-      + The setup target will check to see if you have already copied the sample.config.json to
-        config.json for execution. If you have, the setup will not overwrite the config.json file.
+    + You still need to update the access token in the config file to use your personal access token.
+    + The setup target will check to see if you have already copied the sample.config.json to
+      config.json for execution. If you have, the setup will not overwrite the config.json file.
 
     3. Backup your installed version of `go` (`$ which go`) to the value returned
       from `$ which go` in your shell with a file extension `.bak` appended.
-
-      **IMPORTANT NOTE(S):**
-      + The setup target will check to see if you have already backed up a go command. If you have,
-      the setup will not overwrite the backup.
+    + The setup target will check to see if you have already backed up a go command. If you have,
+    the setup will not overwrite the backup.
 
     4. Move `./bin/go-cover` to `which go` to be used as the system-wide `go` command
       + You can verify this by running `go version` after running `make setup`
