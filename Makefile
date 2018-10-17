@@ -1,11 +1,12 @@
 default: build
 
 setup:
-	go install github.com/golang/dep/cmd/dep
-	sudo ./build/setup.sh
+	go get -u -v github.com/golang/dep/cmd/dep
+	dep ensure -v
+	./build/setup.sh
 
 clean:
-	sudo ./build/clean.sh
+	./build/clean.sh
 
 build:
 	go fmt ./...
@@ -15,7 +16,7 @@ install: build
 	cp bin/neighbor /usr/local/bin
 
 run: build
-	./bin/neighbor -filepath $(PWD)/config.yml
+	COVERPROFILE_FNAME="neighbor-coverprofile.out" ./bin/neighbor -filepath $(PWD)/config.json
 
 test:
 	go test ./...

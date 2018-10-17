@@ -24,51 +24,63 @@ type ClonedRepositoriesCtxKey struct{}
 // path to where the repository was cloned.
 type repoDirMap map[string]string
 
+// ExternalProject contains a GitHub project's name as where it was cloned to
+type ExternalProject struct {
+	Name      string
+	Directory string
+}
+
 // CloneFromResult creates temporary directories where the base path is that of os.TempDir
 // and the rest of the path is the Name of the repository. After creating a temporary
 // directory, a project is cloned into that directory. After creating temp directories
 // and cloning projects into the respective directory, the context is updated
 // with the project names and the temporary directories.
-func CloneFromResult(ctx *neighbor.Ctx, c *github.Client, d interface{}) {
-	switch t := d.(type) {
-	case *github.RepositoriesSearchResult:
-		for _, r := range t.Repositories {
+func CloneFromResult(ctx *neighbor.Ctx, c *github.Client, d interface{}) <-chan ExternalProject {
+	// create a buffered channel that will have at most a single element at a time
+	ch := make(chan ExternalProject, 1)
 
-			ctx.Logger.Debugf("%+v", r)
-			dir := fmt.Sprintf("%s/%s", ctx.ExtResultDir, *r.Name)
-			ctx.Logger.Infof("created directory: %s", dir)
+	go func() {
+		defer close(ch)
 
-			_, err := git.PlainClone(dir, false, &git.CloneOptions{
-				// go-git does not yet support TokenAuth (https://godoc.org/gopkg.in/src-d/go-git.v4/plumbing/transport/http#TokenAuth)
-				// you will recieve and error similar to the following:
-				// unexpected client error: unexpected requesting ... status code: 400
-				// instead, you must use BasicAuth with your GitHub Access Token as the password
-				// and the Username can be anything.
-				Auth: &http.BasicAuth{
-					Username: "abc123", // yes, this can be anything except an empty string
-					Password: ctx.GitHub.AccessToken,
-				},
-				URL:      r.GetCloneURL(),
-				Progress: os.Stdout,
-			})
-			if err != nil {
-				ctx.Logger.Errorf("failed to clone project %s with error: %+v", *r.Name, err)
-				return
+		switch t := d.(type) {
+		case *github.RepositoriesSearchResult:
+			for _, r := range t.Repositories {
+
+				ctx.Logger.Debugf("%+v", r)
+				dir := fmt.Sprintf("%s/%s", ctx.ExtResultDir, *r.Name)
+				ctx.Logger.Infof("created directory: %s", dir)
+
+				_, err := git.PlainClone(dir, false, &git.CloneOptions{
+					// go-git does not yet support TokenAuth (https://godoc.org/gopkg.in/src-d/go-git.v4/plumbing/transport/http#TokenAuth)
+					// you will recieve and error similar to the following:
+					// unexpected client error: unexpected requesting ... status code: 400
+					// instead, you must use BasicAuth with your GitHub Access Token as the password
+					// and the Username can be anything.
+					Auth: &http.BasicAuth{
+						Username: "abc123", // yes, this can be anything except an empty string
+						Password: ctx.GitHub.AccessToken,
+					},
+					URL:      r.GetCloneURL(),
+					Progress: os.Stdout,
+				})
+				if err != nil {
+					ctx.Logger.Errorf("failed to clone project %s with error: %+v", *r.Name, err)
+					continue
+				}
+
+				ctx.Logger.Infof("cloned: %s", r.GetCloneURL())
+
+				select {
+				case ch <- ExternalProject{
+					Name:      *r.Name,
+					Directory: dir,
+				}:
+				case <-ctx.Context.Done():
+					return
+				}
 			}
-
-			ctx.Logger.Infof("cloned: %s", r.GetCloneURL())
-
-			ctx.ProjectDirMap[*r.Name] = dir
-
-			ctx.Logger.Infof("Project Directory Map: %+v", ctx.ProjectDirMap)
 		}
+	}()
 
-		return
-	case *github.CodeSearchResult:
-		// needs implemented
-	default:
-		return
-	}
-
-	return
+	return ch
 }
