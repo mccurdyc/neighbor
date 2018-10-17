@@ -1,7 +1,7 @@
 default: build
 
 setup:
-	go install github.com/golang/dep/cmd/dep
+	go get -u -v github.com/golang/dep/cmd/dep
 	sudo ./build/setup.sh
 
 clean:
