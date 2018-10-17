@@ -4,7 +4,6 @@ import (
 	// stdlib
 	"context"
 	"os"
-	"os/exec"
 
 	// external
 	log "github.com/sirupsen/logrus"
@@ -18,14 +17,13 @@ import (
 // This does NOT satisfice the context.Context interface (https://golang.org/pkg/context/#Context),
 // therefore, it cannot be used as a context for methods or functions requiring a context.Context.
 type Ctx struct {
-	Config        *config.Config  // the query config created by the user
-	Context       context.Context // a context object required by the GitHub SDK
-	GitHub        GitHubDetails
-	Logger        *log.Logger // the logger to be used throughout the project
-	NeighborDir   string
-	ProjectDirMap map[string]string // key: project name, value: absolute path to directory
-	ExtResultDir  string            // where the external projects and test results will be stored
-	TestCmd       *exec.Cmd         // external project test command
+	Config       *config.Config  // the query config created by the user
+	Context      context.Context // a context object required by the GitHub SDK
+	GitHub       GitHubDetails
+	Logger       *log.Logger // the logger to be used throughout the project
+	NeighborDir  string
+	ExtResultDir string   // where the external projects and test results will be stored
+	TestCmd      []string // external project test command and args
 }
 
 // GitHubDetails are GitHub-specifc details necessary throughout the project
