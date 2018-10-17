@@ -1,7 +1,8 @@
 bin/
 vendor/
 .env
-junk
-notes.md
 config.yml
 config.json
+ext-results/
+_ext-results/
+
