@@ -91,7 +91,6 @@ func main() {
 	wg.Add(1)
 
 	go func() {
-
 		ch := github.CloneFromResult(ctx, svc.Client, res)
 		external.RunTests(ctx, ch)
 

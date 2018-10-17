@@ -1,8 +1,8 @@
 package neighbor
 
+// stdlib
 import "strings"
 
-// stdlib
 // external
 // internal
 

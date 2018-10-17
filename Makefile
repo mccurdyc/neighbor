@@ -1,5 +1,8 @@
 default: build
 
+GOCMD := $(shell which go)
+GOBAK := $(GOCMD).bak
+
 setup:
 	go get -u -v github.com/golang/dep/cmd/dep
 	dep ensure -v
