@@ -1,12 +1,39 @@
-package external
+package main
 
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 )
+
+func main() {
+	cp, ok := os.LookupEnv("COVERPROFILE_FNAME")
+	if !ok {
+		fmt.Println("COVERPROFILE_FNAME not set and required for outputting coverage profiles")
+	}
+
+	cmd := exec.Command("make", "test")
+
+	if err := cmd.Run(); err != nil {
+		fmt.Printf("failed to run test command with error %+v", err)
+		os.Exit(1)
+	}
+
+	p := filepath.Dir(".")
+
+	fOut := fmt.Sprintf("%s-cover-profile.out", p)
+
+	err := collateCoverageProfiles(p, cp, fOut)
+	if err != nil {
+		fmt.Printf("error collating coverage profiles %+v", err)
+	}
+
+	fmt.Printf("collated coverage profiles: %s", fOut)
+}
 
 // collateCoverageProfiles collates all occurrences of a file named basename in
 // the root defined by root, into a single file, out, with the header row of all

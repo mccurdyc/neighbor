@@ -3,7 +3,6 @@ package external
 import (
 	// stdlib
 
-	"fmt"
 	"os"
 	"os/exec"
 
@@ -14,17 +13,13 @@ import (
 	"github.com/mccurdyc/neighbor/pkg/neighbor"
 )
 
-// RunTests runs the tests of an external project using the context's TestCmd.
-func RunTests(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
-	cp, ok := os.LookupEnv("COVERPROFILE_FNAME")
-	if !ok {
-		ctx.Logger.Error("COVERPROFILE_FNAME not set and required for outputting coverage profiles")
-	}
-
+// Run runs an arbitrary command specified in the Ctx on each project
+// that is sent through the pipeline.
+func Run(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
 	run := func(ch <-chan github.ExternalProject) {
 		for p := range ch {
 
-			ctx.Logger.Infof("running tests for %s", p.Name)
+			ctx.Logger.Infof("running external command on %s", p.Name)
 			err := os.Chdir(p.Directory)
 			if err != nil {
 				ctx.Logger.Error(err)
@@ -53,14 +48,6 @@ func RunTests(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
 				ctx.Logger.Errorf("failed to run test command with error %+v", err)
 				continue
 			}
-
-			fOut := fmt.Sprintf("%s/%s-cover-profile.out", p.Directory, p.Name)
-			err = collateCoverageProfiles(p.Directory, cp, fOut)
-			if err != nil {
-				ctx.Logger.Errorf("error collating coverage profiles %+v", err)
-			}
-
-			ctx.Logger.Infof("collated coverage profiles for %s at %s", p.Name, fOut)
 		}
 
 		select {

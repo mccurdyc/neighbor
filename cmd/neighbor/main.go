@@ -92,7 +92,7 @@ func main() {
 
 	go func() {
 		ch := github.CloneFromResult(ctx, svc.Client, res)
-		external.RunTests(ctx, ch)
+		external.Run(ctx, ch)
 
 		wg.Done()
 
