@@ -6,7 +6,7 @@ import "strings"
 // external
 // internal
 
-// SetTestCmd sets the test command that will be run on external projects.
-func SetTestCmd(c *Ctx) {
-	c.TestCmd = strings.Split(c.Config.Contents.TestCmdStr, " ")
+// SetExternalCmd sets the command that will be run on external projects.
+func SetExternalCmd(c *Ctx) {
+	c.ExternalCmd = strings.Split(c.Config.Contents.ExternalCmdStr, " ")
 }

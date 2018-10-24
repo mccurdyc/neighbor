@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 
 	// external
@@ -85,22 +84,9 @@ func main() {
 	ctx.Logger.Debugf("github search response: %+v", resp)
 	ctx.Logger.Debugf("github search result: %+v", res)
 
-	neighbor.SetTestCmd(ctx)
+	neighbor.SetExternalCmd(ctx)
+	ctx.Logger.Infof("external command to be run on each project: %s\n", ctx.ExternalCmd)
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	go func() {
-		ch := github.CloneFromResult(ctx, svc.Client, res)
-		external.Run(ctx, ch)
-
-		wg.Done()
-
-		select {
-		case <-ctx.Context.Done():
-			return
-		}
-	}()
-
-	wg.Wait()
+	ch := github.CloneFromResult(ctx, svc.Client, res)
+	external.Run(ctx, ch)
 }
