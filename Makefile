@@ -1,10 +1,10 @@
 default: build
 
 setup:
+	go get -u -v github.com/golang/dep/cmd/dep
 	./build/setup.sh
 
 build:
-	go get -u -v github.com/golang/dep/cmd/dep
 	dep ensure -v
 	go fmt ./...
 	go build -o bin/neighbor cmd/neighbor/main.go

@@ -2,13 +2,11 @@ package external
 
 import (
 	// stdlib
-
 	"os"
 	"os/exec"
 	"sync"
 
 	// external
-
 	// internal
 	"github.com/mccurdyc/neighbor/pkg/github"
 	"github.com/mccurdyc/neighbor/pkg/neighbor"
@@ -28,7 +26,7 @@ func Run(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
 			}
 
 			if len(ctx.ExternalCmd) < 1 {
-				ctx.Logger.Errorf("test command cannot be empty")
+				ctx.Logger.Errorf("external command cannot be empty")
 				return
 			}
 
@@ -46,7 +44,7 @@ func Run(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
 			cmd.Stderr = os.Stderr
 
 			if err := cmd.Run(); err != nil {
-				ctx.Logger.Errorf("failed to run test command with error %+v", err)
+				ctx.Logger.Errorf("failed to run external command with error %+v", err)
 				continue
 			}
 		}
