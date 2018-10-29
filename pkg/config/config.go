@@ -18,7 +18,7 @@ type Contents struct {
 	SearchType  string `json:"search_type"`
 	Query       string `json:"query"`
 
-	TestCmdStr string `json:"external_test_command"`
+	ExternalCmdStr string `json:"external_command"`
 }
 
 // Config specifies information about the config file used for performing the experiment.

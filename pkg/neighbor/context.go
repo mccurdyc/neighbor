@@ -14,7 +14,7 @@ import (
 
 // Ctx is an object that contains information that will be used throughout the
 // life of the neighor command. The idea was taken from the dep tool (https://github.com/golang/dep/blob/master/context.go#L23).
-// This does NOT satisfice the context.Context interface (https://golang.org/pkg/context/#Context),
+// This does NOT satisfy the context.Context interface (https://golang.org/pkg/context/#Context),
 // therefore, it cannot be used as a context for methods or functions requiring a context.Context.
 type Ctx struct {
 	Config       *config.Config  // the query config created by the user
@@ -23,7 +23,7 @@ type Ctx struct {
 	Logger       *log.Logger // the logger to be used throughout the project
 	NeighborDir  string
 	ExtResultDir string   // where the external projects and test results will be stored
-	TestCmd      []string // external project test command and args
+	ExternalCmd  []string // external project command and args
 }
 
 // GitHubDetails are GitHub-specifc details necessary throughout the project

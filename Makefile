@@ -1,17 +1,11 @@
 default: build
 
-GOCMD := $(shell which go)
-GOBAK := $(GOCMD).bak
-
 setup:
 	go get -u -v github.com/golang/dep/cmd/dep
-	dep ensure -v
 	./build/setup.sh
 
-clean:
-	./build/clean.sh
-
 build:
+	dep ensure -v
 	go fmt ./...
 	go build -o bin/neighbor cmd/neighbor/main.go
 
@@ -19,9 +13,9 @@ install: build
 	cp bin/neighbor /usr/local/bin
 
 run: build
-	COVERPROFILE_FNAME="neighbor-coverprofile.out" ./bin/neighbor -filepath $(PWD)/config.json
+	./bin/neighbor -filepath $(PWD)/config.json
 
 test:
 	go test ./...
 
-.PHONY: build install setup run test clean
+.PHONY: setup build install run test

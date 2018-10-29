@@ -10,34 +10,18 @@ A neighborhood watch tool for evaluating neighbors' test suite adequacy in the n
 1. Installing the project
     1. `cd $HOME/go`
     2. `go get -u -v github.com/mccurdyc/neighbor`
+
 2. Prepare neighbor for Execution
     ```bash
     make setup
     ```
 
     The `setup` `make` target will do the following:
-    1. Install `dep`
-    2. Create a `config.json` file from the `sample.config.json` file
-    + You still need to update the access token in the config file to use your personal access token.
-    + The setup target will check to see if you have already copied the sample.config.json to
-      config.json for execution. If you have, the setup will not overwrite the config.json file.
+    + Create a `config.json` file from the `sample.config.json` file
+      + You still need to update the access token in the config file to use your personal access token.
+      + The setup target will check to see if you have already copied the sample.config.json to
+        config.json for execution. If you have, the setup will not overwrite the config.json file.
 
-    3. Backup your installed version of `go` (`$ which go`) to the value returned
-      from `$ which go` in your shell with a file extension `.bak` appended.
-    + The setup target will check to see if you have already backed up a go command. If you have,
-    the setup will not overwrite the backup.
-
-    4. Move `./bin/go-cover` to `which go` to be used as the system-wide `go` command
-      + You can verify this by running `go version` after running `make setup`
-          + If you see something similar to the following, then you are still
-            running an officially-released version of `go`.
-              ```bash
-              go version go1.11 linux/amd64
-              ```
-          + If you see something like the following, then you are running neighbor's `go` version.
-              ```bash
-              go version devel +2afdd17e3f Mon Oct 8 19:13:38 2018 +0000 linux/amd64
-              ```
 3. Generate a [Personal Access Token on GitHub](https://github.com/settings/tokens)
     neighbor uses token authentication for communicating and authenticating with GitHub.
     To read more about GitHub's token authentication, visit [this site](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/).
@@ -63,12 +47,8 @@ A neighborhood watch tool for evaluating neighbors' test suite adequacy in the n
     at the config.json file in the root of the project.
 
     neighbor will use the GitHub query specified in the config file to find projects
-    on GitHub. neighbor will then clone and test each of these projects sequentially
-    using the test command specified in the config. neighbor will use a custom go binary
-    instead of the default go binary. This custom go binary always enables the
-    `-coverprofile` flag during `go test` and writes to a file named using the format
-    `projectname-cover-profile.out` at the root of each project under the `_ext-results/`
-    directory.
+    on GitHub. neighbor will then clone and run the external command in each of the
+    projects' directory, sequentially using the command specified in the config, `external_command`.
 
 ## License
 + [GNU General Public License Version 3](./LICENSE)
