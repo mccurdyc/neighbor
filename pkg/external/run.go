@@ -3,9 +3,9 @@ package external
 import (
 	// stdlib
 
-	"fmt"
 	"os"
 	"os/exec"
+	"sync"
 
 	// external
 
@@ -14,24 +14,20 @@ import (
 	"github.com/mccurdyc/neighbor/pkg/neighbor"
 )
 
-// RunTests runs the tests of an external project using the context's TestCmd.
-func RunTests(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
-	cp, ok := os.LookupEnv("COVERPROFILE_FNAME")
-	if !ok {
-		ctx.Logger.Error("COVERPROFILE_FNAME not set and required for outputting coverage profiles")
-	}
-
+// Run runs an arbitrary command specified in the Ctx on each project
+// that is sent through the pipeline.
+func Run(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
 	run := func(ch <-chan github.ExternalProject) {
 		for p := range ch {
 
-			ctx.Logger.Infof("running tests for %s", p.Name)
+			ctx.Logger.Infof("running external command on %s", p.Name)
 			err := os.Chdir(p.Directory)
 			if err != nil {
 				ctx.Logger.Error(err)
 				continue
 			}
 
-			if len(ctx.TestCmd) < 1 {
+			if len(ctx.ExternalCmd) < 1 {
 				ctx.Logger.Errorf("test command cannot be empty")
 				return
 			}
@@ -40,10 +36,10 @@ func RunTests(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
 			// a pointer to a Cmd and if you call Run() on that command, it will say
 			// that it is already processing.
 			var cmd *exec.Cmd
-			if len(ctx.TestCmd) == 1 {
-				cmd = exec.Command(ctx.TestCmd[0])
+			if len(ctx.ExternalCmd) == 1 {
+				cmd = exec.Command(ctx.ExternalCmd[0])
 			} else {
-				cmd = exec.Command(ctx.TestCmd[0], ctx.TestCmd[1:]...)
+				cmd = exec.Command(ctx.ExternalCmd[0], ctx.ExternalCmd[1:]...)
 			}
 
 			cmd.Stdout = os.Stdout
@@ -53,28 +49,21 @@ func RunTests(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
 				ctx.Logger.Errorf("failed to run test command with error %+v", err)
 				continue
 			}
-
-			fOut := fmt.Sprintf("%s/%s-cover-profile.out", p.Directory, p.Name)
-			err = collateCoverageProfiles(p.Directory, cp, fOut)
-			if err != nil {
-				ctx.Logger.Errorf("error collating coverage profiles %+v", err)
-			}
-
-			ctx.Logger.Infof("collated coverage profiles for %s at %s", p.Name, fOut)
-		}
-
-		select {
-		case <-ctx.Context.Done():
-			return
 		}
 	}
 
+	var wg sync.WaitGroup
+	wg.Add(1)
+
 	go func() {
 		run(ch)
+		wg.Done()
 
 		select {
 		case <-ctx.Context.Done():
 			return
 		}
 	}()
+
+	wg.Wait()
 }
