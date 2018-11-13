@@ -2,7 +2,6 @@ package main
 
 import (
 	// stdlib
-
 	"context"
 	"flag"
 	"fmt"
@@ -59,7 +58,7 @@ func main() {
 		},
 		Logger:       l,
 		NeighborDir:  wd,
-		ExtResultDir: fmt.Sprintf("%s/%s", wd, "_ext-results"), // go tools handle directories prepended with '_' differently; often they ignore those directories
+		ExtResultDir: fmt.Sprintf("%s/%s", wd, "_external-projects-wd"), // go tools handle directories prepended with '_' differently; often they ignore those directories
 	}
 
 	ll := os.Getenv("LOG_LEVEL")

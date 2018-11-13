@@ -1,10 +1,18 @@
 # neighbor
 ---
-A neighborhood watch tool for evaluating neighbors' test suite adequacy in the neighborhood, GitHub projects.
+
+That friendly neighbor that makes the neighborhood a great place by helping everyone
+get things done.
 
 ## Requirements
 + [Go](https://golang.org/dl/)
     1. `mkdir $HOME/go`
+
+## Creating an External Command
+neighbor allows you to specify an arbitrary command to be run on a per-repository basis.
+The command should be executable from the command-line.
+
+Some sample external commands can be found in the [examples](./_examples).
 
 ## Getting Started
 1. Installing the project
@@ -38,7 +46,7 @@ A neighborhood watch tool for evaluating neighbors' test suite adequacy in the n
         ...
       }
       ```
-4. Performing a neighborhood analysis with neighbor
+4. Executing an external command on each of the GitHub projects returned from the query
     ```bash
     make run
     ```
