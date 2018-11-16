@@ -1,12 +1,22 @@
 package neighbor
 
+import (
+	"strings"
+)
+
 // stdlib
-import "strings"
 
 // external
 // internal
 
 // SetExternalCmd sets the command that will be run on external projects.
-func SetExternalCmd(c *Ctx) {
-	c.ExternalCmd = strings.Split(c.Config.Contents.ExternalCmdStr, " ")
+func (c *Ctx) SetExternalCmd(s string) error {
+	cmd := parseCmd(s)
+
+	c.ExternalCmd = cmd
+	return nil
+}
+
+func parseCmd(s string) []string {
+	return strings.Split(s, " ")
 }
