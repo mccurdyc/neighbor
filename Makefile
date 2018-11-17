@@ -13,7 +13,7 @@ install: build
 	cp bin/neighbor /usr/local/bin
 
 run: build
-	./bin/neighbor -filepath $(PWD)/config.json
+	./bin/neighbor -file=$(PWD)/config.json
 
 test:
 	go test ./...

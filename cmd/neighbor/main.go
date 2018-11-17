@@ -27,6 +27,8 @@ func main() {
 	query := flag.String("query", "", "the GitHub search query to execute.")
 	externalCmd := flag.String("external_command", "", "the command to execute on each project returned from the GitHub search query.")
 
+	flag.Parse()
+
 	l := log.New()
 
 	wd, err := os.Getwd()
