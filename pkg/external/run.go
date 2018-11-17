@@ -25,11 +25,6 @@ func Run(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
 				continue
 			}
 
-			if len(ctx.ExternalCmd) < 1 {
-				ctx.Logger.Errorf("external command cannot be empty")
-				return
-			}
-
 			// we can't parse the command outside of this loop because exec.Command creates
 			// a pointer to a Cmd and if you call Run() on that command, it will say
 			// that it is already processing.

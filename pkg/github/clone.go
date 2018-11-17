@@ -51,10 +51,7 @@ func CloneFromResult(ctx *neighbor.Ctx, c *github.Client, d interface{}) <-chan 
 				ctx.Logger.Infof("created directory: %s", dir)
 
 				_, err := git.PlainClone(dir, false, &git.CloneOptions{
-					// go-git does not yet support TokenAuth (https://godoc.org/gopkg.in/src-d/go-git.v4/plumbing/transport/http#TokenAuth)
-					// you will recieve and error similar to the following:
-					// unexpected client error: unexpected requesting ... status code: 400
-					// instead, you must use BasicAuth with your GitHub Access Token as the password
+					// you must use BasicAuth with your GitHub Access Token as the password
 					// and the Username can be anything.
 					Auth: &http.BasicAuth{
 						Username: "abc123", // yes, this can be anything except an empty string
