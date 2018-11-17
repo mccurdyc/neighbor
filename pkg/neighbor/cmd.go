@@ -2,7 +2,6 @@ package neighbor
 
 import (
 	// stdlib
-
 	"errors"
 	"strings"
 	"unicode"
