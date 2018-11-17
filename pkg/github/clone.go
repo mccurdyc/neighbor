@@ -36,8 +36,7 @@ type ExternalProject struct {
 // and cloning projects into the respective directory, the context is updated
 // with the project names and the temporary directories.
 func CloneFromResult(ctx *neighbor.Ctx, c *github.Client, d interface{}) <-chan ExternalProject {
-	// create a buffered channel that will have at most a single element at a time
-	ch := make(chan ExternalProject, 1)
+	ch := make(chan ExternalProject)
 
 	go func() {
 		defer close(ch)

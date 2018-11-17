@@ -118,5 +118,8 @@ func main() {
 	ctx.Logger.Debugf("github search result: %+v", res)
 
 	ch := github.CloneFromResult(ctx, svc.Client, res)
-	external.Run(ctx, ch)
+	done := external.Run(ctx, ch)
+
+	// wait for iteration over all projects to complete
+	<-done
 }
