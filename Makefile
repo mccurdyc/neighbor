@@ -5,7 +5,6 @@ setup:
 	./build/setup.sh
 
 build:
-	dep ensure -v
 	go fmt ./...
 	go build -o bin/neighbor cmd/neighbor/main.go
 
