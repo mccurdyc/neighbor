@@ -5,7 +5,7 @@ That friendly neighbor that makes the neighborhood a great place by helping ever
 get things done.
 
 ## Requirements
-+ [Go](https://golang.org/dl/)
++ [Go](https://golang.org/dl/) >= 1.11
     1. `mkdir $HOME/go`
 
 ## Creating an External Command
