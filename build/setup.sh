@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+NEIGHBOR_DIR=$1
 NEIGHBOR_CFG="$NEIGHBOR_DIR/config.json"
 NEIGHBOR_SAMPLE_CFG="$NEIGHBOR_DIR/sample.config.json"
 
