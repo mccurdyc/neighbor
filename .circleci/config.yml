@@ -1,0 +1,15 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.11
+    working_directory: /go/src/github.com/mccurdyc/neighbor
+    environment:
+      - GO111MODULE=on
+    steps:
+      - checkout
+
+      - run: go get -v -t -d ./...
+      - run: go build cmd/neighbor/main.go
+      - run: go test -v ./...
+      - run: go fmt ./...
