@@ -5,6 +5,7 @@ import (
 
 	"fmt"
 	"os"
+	"sync"
 
 	// external
 	"github.com/google/go-github/github"
@@ -38,8 +39,12 @@ type ExternalProject struct {
 func CloneFromResult(ctx *neighbor.Ctx, c *github.Client, d interface{}) <-chan ExternalProject {
 	ch := make(chan ExternalProject)
 
+	var wg sync.WaitGroup
+	wg.Add(1)
+
 	go func() {
 		defer close(ch)
+		defer wg.Done()
 
 		switch t := d.(type) {
 		case *github.RepositoriesSearchResult:
@@ -66,16 +71,17 @@ func CloneFromResult(ctx *neighbor.Ctx, c *github.Client, d interface{}) <-chan 
 
 				ctx.Logger.Infof("cloned: %s", r.GetCloneURL())
 
-				select {
-				case ch <- ExternalProject{
+				// this should block until there is a receiver
+				ch <- ExternalProject{
 					Name:      *r.Name,
 					Directory: dir,
-				}:
-				case <-ctx.Context.Done():
-					return
 				}
 			}
 		}
+	}()
+
+	go func() {
+		wg.Wait()
 	}()
 
 	return ch

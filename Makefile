@@ -11,7 +11,7 @@ endif
 
 build:
 	go fmt ./...
-	go build -o bin/neighbor cmd/neighbor/main.go
+	go build -race -o bin/neighbor cmd/neighbor/main.go
 
 install: build
 	cp bin/neighbor /usr/local/bin
