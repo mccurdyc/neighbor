@@ -71,11 +71,7 @@ func main() {
 		cmd = cfg.Contents.ExternalCmdStr
 	}
 
-	if err = ctx.SetExternalCmd(cmd); err != nil {
-		err = errors.Wrap(err, "error parsing external command from config")
-		ctx.Logger.Error(err)
-		os.Exit(1)
-	}
+	ctx.SetExternalCmd(cmd)
 	ctx.Logger.Infof("external command to be run on each project: %s\n", ctx.ExternalCmd)
 
 	if err = ctx.Validate(); err != nil {
