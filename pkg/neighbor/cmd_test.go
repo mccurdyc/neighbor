@@ -85,18 +85,18 @@ func TestCleanWords(t *testing.T) {
 	}{
 		{
 			name:     "regex no match",
-			input:    []string{"hello", "there"},
-			expected: []string{"hello", "there"},
+			input:    []string{"hello there", "world"},
+			expected: []string{"hello there", "world"},
 		},
 		{
 			name:     "regex match double quote",
-			input:    []string{"\"hello\"", "there"},
-			expected: []string{"hello", "there"},
+			input:    []string{"\"hello there\"", "\"world\""},
+			expected: []string{"hello there", "world"},
 		},
 		{
 			name:     "regex match single quote",
-			input:    []string{"'hello'", "there"},
-			expected: []string{"hello", "there"},
+			input:    []string{"'hello there'", "'world'"},
+			expected: []string{"hello there", "world"},
 		},
 	}
 
