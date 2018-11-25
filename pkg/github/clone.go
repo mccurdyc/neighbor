@@ -37,21 +37,20 @@ type ExternalProject struct {
 // and cloning projects into the respective directory, the context is updated
 // with the project names and the temporary directories.
 func CloneFromResult(ctx *neighbor.Ctx, c *github.Client, d interface{}) <-chan ExternalProject {
-	ch := make(chan ExternalProject)
+	ch := make(chan ExternalProject) // an unbuffered, synchronous channel for guaranteed delivery
 
 	var wg sync.WaitGroup
-	wg.Add(1)
 
-	go func() {
-		defer close(ch)
-		defer wg.Done()
+	switch t := d.(type) {
+	case *github.RepositoriesSearchResult:
+		for _, r := range t.Repositories {
+			wg.Add(1)
 
-		switch t := d.(type) {
-		case *github.RepositoriesSearchResult:
-			for _, r := range t.Repositories {
+			go func(repo github.Repository) {
+				defer wg.Done()
 
-				ctx.Logger.Debugf("%+v", r)
-				dir := fmt.Sprintf("%s/%s", ctx.ExtResultDir, *r.Name)
+				ctx.Logger.Debugf("%+v", repo)
+				dir := fmt.Sprintf("%s/%s", ctx.ExtResultDir, *repo.Name)
 				ctx.Logger.Infof("created directory: %s", dir)
 
 				_, err := git.PlainClone(dir, false, &git.CloneOptions{
@@ -61,27 +60,30 @@ func CloneFromResult(ctx *neighbor.Ctx, c *github.Client, d interface{}) <-chan 
 						Username: "abc123", // yes, this can be anything except an empty string
 						Password: ctx.GitHub.AccessToken,
 					},
-					URL:      r.GetCloneURL(),
+					URL:      repo.GetCloneURL(),
 					Progress: os.Stdout,
 				})
 				if err != nil {
-					ctx.Logger.Errorf("failed to clone project %s with error: %+v", *r.Name, err)
-					continue
+					ctx.Logger.Errorf("failed to clone project %s with error: %+v", *repo.Name, err)
+					return
 				}
 
-				ctx.Logger.Infof("cloned: %s", r.GetCloneURL())
+				ctx.Logger.Infof("cloned: %s", repo.GetCloneURL())
 
 				// this should block until there is a receiver
 				ch <- ExternalProject{
-					Name:      *r.Name,
+					Name:      *repo.Name,
 					Directory: dir,
 				}
-			}
+			}(r)
 		}
-	}()
+	}
 
 	go func() {
 		wg.Wait()
+		// after we are finished cloning the repos and sending them through the pipeline,
+		// send a signal informing the consumers that we are done sending.
+		close(ch)
 	}()
 
 	return ch

@@ -13,32 +13,37 @@ import (
 	"github.com/pkg/errors"
 )
 
-const numWorkers = 2
-
 // Run runs an arbitrary command specified in the Ctx on each project
 // that is sent through the pipeline.
-func Run(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
+//
+// There are numWorkers defined that read from the pipeline and then run the external
+// command on the project.
+//
+// When each worker has recieved the empty channel signal from the pipeline, we
+// are finished.
+func Run(ctx *neighbor.Ctx, ch <-chan github.ExternalProject, numWorkers int) {
 	var wg sync.WaitGroup
 
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 
 		go func() {
-			p, ok := <-ch
-			if !ok {
-				wg.Done()
-			}
+			for {
+				select {
+				case p, ok := <-ch:
+					if !ok {
+						wg.Done()
+						return
+					}
 
-			if err := run(ctx, p); err != nil {
-				ctx.Logger.Error(err)
+					if err := run(ctx, p); err != nil {
+						ctx.Logger.Error(err)
+					}
+				}
 			}
-
-			wg.Done()
 		}()
-
 	}
 
-	// wait for all workers to finish
 	wg.Wait()
 }
 
