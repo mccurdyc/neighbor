@@ -43,37 +43,17 @@ func CloneFromResult(ctx *neighbor.Ctx, c *github.Client, d interface{}) <-chan 
 
 	switch t := d.(type) {
 	case *github.RepositoriesSearchResult:
+		wg.Add(len(t.Repositories))
+
 		for _, r := range t.Repositories {
-			wg.Add(1)
-
 			go func(repo github.Repository) {
-				defer wg.Done()
-
-				ctx.Logger.Debugf("%+v", repo)
-				dir := fmt.Sprintf("%s/%s", ctx.ExtResultDir, *repo.Name)
-				ctx.Logger.Infof("created directory: %s", dir)
-
-				_, err := git.PlainClone(dir, false, &git.CloneOptions{
-					// you must use BasicAuth with your GitHub Access Token as the password
-					// and the Username can be anything.
-					Auth: &http.BasicAuth{
-						Username: "abc123", // yes, this can be anything except an empty string
-						Password: ctx.GitHub.AccessToken,
-					},
-					URL:      repo.GetCloneURL(),
-					Progress: os.Stdout,
-				})
-				if err != nil {
-					ctx.Logger.Errorf("failed to clone project %s with error: %+v", *repo.Name, err)
+				select {
+				case <-ctx.Context.Done():
+					wg.Done()
 					return
-				}
-
-				ctx.Logger.Infof("cloned: %s", repo.GetCloneURL())
-
-				// this should block until there is a receiver
-				ch <- ExternalProject{
-					Name:      *repo.Name,
-					Directory: dir,
+				default:
+					cloneRepo(ctx, repo, ch)
+					wg.Done()
 				}
 			}(r)
 		}
@@ -87,4 +67,38 @@ func CloneFromResult(ctx *neighbor.Ctx, c *github.Client, d interface{}) <-chan 
 	}()
 
 	return ch
+}
+
+// cloneRepo clones a repository using a GitHub personal access token, given a
+// github.Repository to an out directory specified by ctx.ExternalResultDir/repository_name
+// and informs downstream consumers of the project name and where it is located
+// on the machine.
+func cloneRepo(ctx *neighbor.Ctx, repo github.Repository, ch chan<- ExternalProject) {
+	ctx.Logger.Debugf("%+v", repo)
+
+	dir := fmt.Sprintf("%s/%s", ctx.ExtResultDir, *repo.Name)
+	ctx.Logger.Infof("created directory: %s", dir)
+
+	_, err := git.PlainClone(dir, false, &git.CloneOptions{
+		// you must use BasicAuth with your GitHub Access Token as the password
+		// and the Username can be anything.
+		Auth: &http.BasicAuth{
+			Username: "abc123", // yes, this can be anything except an empty string
+			Password: ctx.GitHub.AccessToken,
+		},
+		URL:      repo.GetCloneURL(),
+		Progress: os.Stdout,
+	})
+	if err != nil {
+		ctx.Logger.Errorf("failed to clone project %s with error: %+v", *repo.Name, err)
+		return
+	}
+
+	ctx.Logger.Infof("cloned: %s", repo.GetCloneURL())
+
+	// this should block until there is a receiver
+	ch <- ExternalProject{
+		Name:      *repo.Name,
+		Directory: dir,
+	}
 }
