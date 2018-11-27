@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"runtime"
 	"syscall"
 
 	// external
@@ -120,9 +119,6 @@ func main() {
 	ctx.Logger.Debugf("github search response: %+v", resp)
 	ctx.Logger.Debugf("github search result: %+v", res)
 
-	ncpu := runtime.GOMAXPROCS(runtime.NumCPU()) // this single line makes it parallel
-	ctx.Logger.Infof("using %d CPUs", ncpu)
-
 	ch := github.CloneFromResult(ctx, svc.Client, res)
-	external.Run(ctx, ch, ncpu)
+	external.Run(ctx, ch)
 }

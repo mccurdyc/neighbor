@@ -4,6 +4,7 @@ import (
 	// stdlib
 	"os"
 	"os/exec"
+	"runtime"
 	"sync"
 
 	// external
@@ -16,15 +17,15 @@ import (
 // Run runs an arbitrary command specified in the Ctx on each project
 // that is sent through the pipeline.
 //
-// There are numWorkers defined that read from the pipeline and then run the external
-// command on the project.
+// The number of workers is defined by the number of logical CPUs that read
+// from the pipeline and then run the external command on each project.
 //
 // When each worker has recieved the empty channel signal from the pipeline, we
 // are finished.
-func Run(ctx *neighbor.Ctx, ch <-chan github.ExternalProject, numWorkers int) {
+func Run(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
 	var wg sync.WaitGroup
 
-	for i := 0; i < numWorkers; i++ {
+	for i := 0; i < runtime.NumCPU(); i++ {
 		wg.Add(1)
 
 		go func() {
