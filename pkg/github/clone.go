@@ -97,8 +97,13 @@ func cloneRepo(ctx *neighbor.Ctx, repo github.Repository, ch chan<- ExternalProj
 	ctx.Logger.Infof("cloned: %s", repo.GetCloneURL())
 
 	// this should block until there is a receiver
-	ch <- ExternalProject{
-		Name:      *repo.Name,
-		Directory: dir,
+	select {
+	case <-ctx.Context.Done():
+		return
+	default:
+		ch <- ExternalProject{
+			Name:      *repo.Name,
+			Directory: dir,
+		}
 	}
 }

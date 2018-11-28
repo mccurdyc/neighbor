@@ -55,6 +55,20 @@ func main() {
 		ExtResultDir: fmt.Sprintf("%s/%s", wd, "_external-projects-wd"), // go tools handle directories prepended with '_' differently; often they ignore those directories
 	}
 
+	// listen for signals such as SIGINT (^C, CONTROL-C)
+	go func() {
+		ch := make(chan os.Signal, 1)
+
+		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
+		defer signal.Stop(ch)
+
+		select {
+		case <-ch:
+			cancel()
+			os.Exit(130)
+		}
+	}()
+
 	cmd := *externalCmd
 
 	if len(*fp) != 0 {
@@ -83,18 +97,6 @@ func main() {
 		ctx.Logger.Error(err)
 		os.Exit(1)
 	}
-
-	go func() {
-		ch := make(chan os.Signal, 1)
-
-		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
-		defer signal.Stop(ch)
-
-		<-ch
-		cancel()
-		ctx.Logger.Info("stopping neighbor")
-		os.Exit(1)
-	}()
 
 	ll := os.Getenv("LOG_LEVEL")
 	if len(ll) == 0 {
