@@ -90,11 +90,10 @@ func main() {
 		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 		defer signal.Stop(ch)
 
-		select {
-		case <-c.Done():
-		case <-ch:
-			cancel()
-		}
+		<-ch
+		cancel()
+		ctx.Logger.Info("stopping neighbor")
+		os.Exit(1)
 	}()
 
 	ll := os.Getenv("LOG_LEVEL")
