@@ -20,6 +20,6 @@ run: build
 	./bin/neighbor -file=$(PWD)/config.json
 
 test:
-	go test ./...
+	go test -v ./...
 
 .PHONY: setup build install run test
