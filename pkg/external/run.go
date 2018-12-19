@@ -4,59 +4,73 @@ import (
 	// stdlib
 	"os"
 	"os/exec"
+	"runtime"
 	"sync"
 
 	// external
 	// internal
 	"github.com/mccurdyc/neighbor/pkg/github"
 	"github.com/mccurdyc/neighbor/pkg/neighbor"
+	"github.com/pkg/errors"
 )
 
 // Run runs an arbitrary command specified in the Ctx on each project
 // that is sent through the pipeline.
+//
+// The number of workers is defined by the number of logical CPUs that read
+// from the pipeline and then run the external command on each project.
+//
+// When each worker has recieved the empty channel signal from the pipeline, we
+// are finished.
 func Run(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
-	run := func(ch <-chan github.ExternalProject) {
-		for p := range ch {
+	var wg sync.WaitGroup
 
-			ctx.Logger.Infof("running external command on %s", p.Name)
-			err := os.Chdir(p.Directory)
-			if err != nil {
-				ctx.Logger.Error(err)
-				continue
+	for i := 0; i < runtime.NumCPU(); i++ {
+		wg.Add(1)
+
+		go func() {
+			for {
+				select {
+				case p, ok := <-ch:
+					if !ok {
+						wg.Done()
+						return
+					}
+
+					if err := run(ctx, p); err != nil {
+						ctx.Logger.Error(err)
+					}
+				}
 			}
-
-			// we can't parse the command outside of this loop because exec.Command creates
-			// a pointer to a Cmd and if you call Run() on that command, it will say
-			// that it is already processing.
-			var cmd *exec.Cmd
-			if len(ctx.ExternalCmd) == 1 {
-				cmd = exec.Command(ctx.ExternalCmd[0])
-			} else {
-				cmd = exec.Command(ctx.ExternalCmd[0], ctx.ExternalCmd[1:]...)
-			}
-
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-
-			if err := cmd.Run(); err != nil {
-				ctx.Logger.Errorf("failed to run external command with error %+v", err)
-				continue
-			}
-		}
+		}()
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	go func() {
-		run(ch)
-		wg.Done()
-
-		select {
-		case <-ctx.Context.Done():
-			return
-		}
-	}()
-
 	wg.Wait()
+}
+
+func run(ctx *neighbor.Ctx, p github.ExternalProject) error {
+	ctx.Logger.Infof("running external command on %s", p.Name)
+	err := os.Chdir(p.Directory)
+	if err != nil {
+		return errors.Wrap(err, "error changing into project working directory")
+	}
+
+	// we can't parse the command outside of this loop because exec.Command creates
+	// a pointer to a Cmd and if you call Run() on that command, it will say
+	// that it is already processing.
+	var cmd *exec.Cmd
+	if len(ctx.ExternalCmd) == 1 {
+		cmd = exec.Command(ctx.ExternalCmd[0])
+	} else {
+		cmd = exec.Command(ctx.ExternalCmd[0], ctx.ExternalCmd[1:]...)
+	}
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		return errors.Wrap(err, "failed to run external command with error")
+	}
+
+	return nil
 }
