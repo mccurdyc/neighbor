@@ -1,6 +1,6 @@
 {
   "access_token": "1234567890abcdefghijklmnopqrstuvwxyz",
   "search_type": "repository",
-  "query": "simpletest user:colton",
-  "external_test_command": "make test"
+  "query": "user:mccurdyc language:golang",
+  "external_command": "make test"
 }
