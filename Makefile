@@ -17,7 +17,7 @@ install: build
 	cp bin/neighbor /usr/local/bin
 
 run: build
-	./bin/neighbor -file=$(PWD)/config.json
+	./bin/neighbor --file=$(pwd)/config.json
 
 clean:
 	rm -rf _external-projects-wd
