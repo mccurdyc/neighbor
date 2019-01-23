@@ -6,16 +6,100 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"time"
+	"path/filepath"
 
 	"github.com/google/go-github/github"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
-	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport/http"
+
+	. "github.com/mccurdyc/neighbor/_examples"
 )
+
+func main() {
+	CheckArgs(
+		"<github access token>",
+		"<username or organization>",
+		"<repository name>",
+	)
+
+	token := os.Args[1]
+	userOrOrgName := os.Args[2]
+	repoName := os.Args[3]
+
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	repo, err := git.PlainOpen(dir)
+	if err != nil {
+		log.Println(errors.Wrap(err, "error opening repository"))
+	}
+
+	wt, err := repo.Worktree()
+	if err != nil {
+		log.Println(errors.Wrap(err, "error getting worktree"))
+	}
+
+	if err = wt.Checkout(&git.CheckoutOptions{
+		Branch: plumbing.ReferenceName("refs/heads/add-license-file"),
+		Create: true,
+		Force:  true,
+	}); err != nil {
+		log.Println(errors.Wrap(err, "error checking out branch"))
+	}
+
+	filename := fmt.Sprintf("%s/LICENSE", dir)
+	if err := ioutil.WriteFile(filename, []byte(apachev2), 0644); err != nil {
+		log.Println(errors.Wrap(err, "error writing to file"))
+	}
+
+	if _, err := wt.Add("LICENSE"); err != nil {
+		log.Println(errors.Wrap(err, "error adding file to working tree"))
+	}
+
+	if _, err := wt.Commit("adding LICENSE", &git.CommitOptions{}); err != nil {
+		log.Println(errors.Wrap(err, "error committing"))
+	}
+
+	repo.Push(&git.PushOptions{
+		RemoteName: "origin",
+		Auth: &http.BasicAuth{
+			Username: "abc",
+			Password: token,
+		},
+	})
+
+	status, err := wt.Status()
+	if err != nil {
+		log.Println(errors.Wrap(err, "error getting workingtree status"))
+	}
+	fmt.Printf("STATUS: %+v\n", status)
+
+	ghClient := github.NewClient(oauth2.NewClient(
+		context.Background(),
+		oauth2.StaticTokenSource(
+			&oauth2.Token{AccessToken: token},
+		)))
+
+	newPR := &github.NewPullRequest{
+		Title:               github.String("neighbor: Adding LICENSE file"),
+		Head:                github.String(fmt.Sprintf("%s:add-license-file", userOrOrgName)),
+		Base:                github.String("master"),
+		Body:                github.String("Adding a LICENSE file"),
+		MaintainerCanModify: github.Bool(true),
+	}
+
+	pr, _, err := ghClient.PullRequests.Create(context.Background(), userOrOrgName, repoName, newPR)
+	if err != nil {
+		log.Println(errors.Wrap(err, "failed to create pull request"))
+	}
+
+	fmt.Printf("PR: %+v\n", pr)
+}
 
 const apachev2 = `
 																Apache License
@@ -220,79 +304,3 @@ const apachev2 = `
    See the License for the specific language governing permissions and
    limitations under the License.
 `
-
-func main() {
-	repo, err := git.PlainClone("/home/mccurdyc/dev/zzz", false, &git.CloneOptions{
-		URL: "https://github.com/neighbor-projects/zzz.git",
-	})
-	if err != nil {
-		log.Println(errors.Wrap(err, "error cloning repository"))
-	}
-
-	wt, err := repo.Worktree()
-	if err != nil {
-		log.Println(errors.Wrap(err, "error getting worktree"))
-	}
-
-	if err = wt.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.ReferenceName("refs/heads/add-license-file"),
-		Create: true,
-		Force:  true,
-	}); err != nil {
-		log.Println(errors.Wrap(err, "error checking out branch"))
-	}
-
-	filename := "/home/mccurdyc/dev/zzz/LICENSE"
-	if err := ioutil.WriteFile(filename, []byte(apachev2), 0644); err != nil {
-		log.Println(errors.Wrap(err, "error writing to file"))
-	}
-
-	if _, err := wt.Add("LICENSE"); err != nil {
-		log.Println(errors.Wrap(err, "error adding file to working tree"))
-	}
-
-	if _, err := wt.Commit("adding LICENSE", &git.CommitOptions{
-		Author: &object.Signature{
-			Name:  "Colton J. McCurdy",
-			Email: "mccurdyc22@gmail.com",
-			When:  time.Now(),
-		},
-	}); err != nil {
-		log.Println(errors.Wrap(err, "error committing"))
-	}
-
-	repo.Push(&git.PushOptions{
-		RemoteName: "origin",
-		Auth: &http.BasicAuth{
-			Username: "abc",
-			Password: os.Getenv("GITHUB_ACCESS_TOKEN"),
-		},
-	})
-
-	status, err := wt.Status()
-	if err != nil {
-		log.Println(errors.Wrap(err, "error getting workingtree status"))
-	}
-	fmt.Printf("STATUS: %+v\n", status)
-
-	ghClient := github.NewClient(oauth2.NewClient(
-		context.Background(),
-		oauth2.StaticTokenSource(
-			&oauth2.Token{AccessToken: os.Getenv("GITHUB_ACCESS_TOKEN")},
-		)))
-
-	newPR := &github.NewPullRequest{
-		Title:               github.String("neighbor: Adding LICENSE file"),
-		Head:                github.String("neighbor-projects:add-license-file"),
-		Base:                github.String("master"),
-		Body:                github.String("Adding a LICENSE file"),
-		MaintainerCanModify: github.Bool(true),
-	}
-
-	pr, _, err := ghClient.PullRequests.Create(context.Background(), "neighbor-projects", "zzz", newPR)
-	if err != nil {
-		log.Println(errors.Wrap(err, "failed to create pull request"))
-	}
-
-	fmt.Printf("PR: %+v\n", pr)
-}
