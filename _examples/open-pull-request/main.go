@@ -7,12 +7,14 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/google/go-github/github"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 
 	. "github.com/mccurdyc/neighbor/_examples"
@@ -29,12 +31,14 @@ func main() {
 	userOrOrgName := os.Args[2]
 	repoName := os.Args[3]
 
-	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	dir, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	repo, err := git.PlainOpen(dir)
+	repoDir := filepath.Join(dir, repoName)
+
+	repo, err := git.PlainOpen(repoDir)
 	if err != nil {
 		log.Println(errors.Wrap(err, "error opening repository"))
 	}
@@ -52,7 +56,7 @@ func main() {
 		log.Println(errors.Wrap(err, "error checking out branch"))
 	}
 
-	filename := fmt.Sprintf("%s/LICENSE", dir)
+	filename := filepath.Join(repoDir, "LICENSE")
 	if err := ioutil.WriteFile(filename, []byte(apachev2), 0644); err != nil {
 		log.Println(errors.Wrap(err, "error writing to file"))
 	}
@@ -61,7 +65,12 @@ func main() {
 		log.Println(errors.Wrap(err, "error adding file to working tree"))
 	}
 
-	if _, err := wt.Commit("adding LICENSE", &git.CommitOptions{}); err != nil {
+	if _, err := wt.Commit("adding LICENSE", &git.CommitOptions{
+		Author: &object.Signature{
+			Name: "neighbor-bot",
+			When: time.Now(),
+		},
+	}); err != nil {
 		log.Println(errors.Wrap(err, "error committing"))
 	}
 
