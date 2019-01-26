@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/google/go-github/github"
@@ -23,31 +24,41 @@ import (
 func main() {
 	CheckArgs(
 		"<github access token>",
-		"<username or organization>",
-		"<repository name>",
 	)
 
 	token := os.Args[1]
-	userOrOrgName := os.Args[2]
-	repoName := os.Args[3]
 
-	dir, err := os.Getwd()
+	wd, err := os.Getwd()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(errors.Wrap(err, "error getting working directory"))
 	}
 
-	repoDir := filepath.Join(dir, repoName)
-
-	repo, err := git.PlainOpen(repoDir)
+	// the repository should already exist locally because neighbor pulls it down
+	repo, err := git.PlainOpen(wd)
 	if err != nil {
-		log.Println(errors.Wrap(err, "error opening repository"))
+		log.Fatal(errors.Wrap(err, "error opening repository"))
 	}
+
+	remotes, err := repo.Remotes()
+	if err != nil {
+		log.Fatal("error getting remotes")
+	}
+
+	if len(remotes) < 1 {
+		log.Fatal("no remotes found")
+	}
+
+	defaultRemoteName := remotes[0].Config().URLs[0]
+
+	splits := strings.Split(defaultRemoteName, "/")
+	userOrOrgName := splits[len(splits)-2] // last element is repoName.git
 
 	wt, err := repo.Worktree()
 	if err != nil {
-		log.Println(errors.Wrap(err, "error getting worktree"))
+		log.Fatal(errors.Wrap(err, "error getting worktree"))
 	}
 
+	// create and checkout a branch
 	if err = wt.Checkout(&git.CheckoutOptions{
 		Branch: plumbing.ReferenceName("refs/heads/add-license-file"),
 		Create: true,
@@ -56,13 +67,14 @@ func main() {
 		log.Println(errors.Wrap(err, "error checking out branch"))
 	}
 
-	filename := filepath.Join(repoDir, "LICENSE")
+	// create and write the Apache v2 license to a LICENSE file
+	filename := filepath.Join(wd, "LICENSE")
 	if err := ioutil.WriteFile(filename, []byte(apachev2), 0644); err != nil {
-		log.Println(errors.Wrap(err, "error writing to file"))
+		log.Fatal(errors.Wrap(err, "error writing to file"))
 	}
 
 	if _, err := wt.Add("LICENSE"); err != nil {
-		log.Println(errors.Wrap(err, "error adding file to working tree"))
+		log.Fatal(errors.Wrap(err, "error adding file to working tree"))
 	}
 
 	if _, err := wt.Commit("adding LICENSE", &git.CommitOptions{
@@ -71,22 +83,16 @@ func main() {
 			When: time.Now(),
 		},
 	}); err != nil {
-		log.Println(errors.Wrap(err, "error committing"))
+		log.Fatal(errors.Wrap(err, "error committing"))
 	}
 
 	repo.Push(&git.PushOptions{
 		RemoteName: "origin",
 		Auth: &http.BasicAuth{
-			Username: "abc",
+			Username: "abc", // this can be anything except empty
 			Password: token,
 		},
 	})
-
-	status, err := wt.Status()
-	if err != nil {
-		log.Println(errors.Wrap(err, "error getting workingtree status"))
-	}
-	fmt.Printf("STATUS: %+v\n", status)
 
 	ghClient := github.NewClient(oauth2.NewClient(
 		context.Background(),
@@ -94,20 +100,20 @@ func main() {
 			&oauth2.Token{AccessToken: token},
 		)))
 
-	newPR := &github.NewPullRequest{
+	repoName := filepath.Base(wd)
+	// create the pull request
+	pr, _, err := ghClient.PullRequests.Create(context.Background(), userOrOrgName, repoName, &github.NewPullRequest{
 		Title:               github.String("neighbor: Adding LICENSE file"),
 		Head:                github.String(fmt.Sprintf("%s:add-license-file", userOrOrgName)),
 		Base:                github.String("master"),
 		Body:                github.String("Adding a LICENSE file"),
 		MaintainerCanModify: github.Bool(true),
-	}
-
-	pr, _, err := ghClient.PullRequests.Create(context.Background(), userOrOrgName, repoName, newPR)
+	})
 	if err != nil {
-		log.Println(errors.Wrap(err, "failed to create pull request"))
+		log.Fatal(errors.Wrap(err, "failed to create pull request"))
 	}
 
-	fmt.Printf("PR: %+v\n", pr)
+	fmt.Printf("OPENED PULL REQUEST: %+v %+v %+v\n", *pr.Number, *pr.Title, *pr.URL)
 }
 
 const apachev2 = `
