@@ -21,7 +21,7 @@ import (
 )
 
 func main() {
-	fp := flag.String("file", "", "absolute filepath to config [default: \"$(PWD)/config.json\"].")
+	fp := flag.String("file", "", "absolute filepath to config [default: \"$(pwd)/config.json\"].")
 	tkn := flag.String("access_token", "", "your personal GitHub access token.")
 	searchType := flag.String("search_type", "", "the type of GitHub search to perform.")
 	query := flag.String("query", "", "the GitHub search query to execute.")

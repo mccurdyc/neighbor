@@ -8,14 +8,16 @@ in a concurrent fashion.
 + [Go](https://golang.org/dl/) >= 1.11
 
 ## Creating an External Command
-neighbor allows you to specify an arbitrary command to be run on a per-repository basis.
-The command should be executable from the command-line.
+neighbor allows you to specify an arbitrary command to be run on a per-repository basis
+with the repository as the working directory.
+
+_The command should be executable from the command-line._
 
 Some sample external commands can be found in the [examples](./_examples).
 
 ## Getting Started
 1. Installing the project
-    1. `git clone https://github.com/mccurdyc/neighbor.git`
+    1. `go get -u github.com/mccurdyc/neighbor`
 
 2. Generate a [Personal Access Token on GitHub](https://github.com/settings/tokens)
     neighbor uses token authentication for communicating and authenticating with GitHub.
