@@ -1,4 +1,4 @@
-default: build
+default: setup
 
 setup:
 ifeq ($(shell go version | grep -e 'go1.11'),)
@@ -17,9 +17,12 @@ install: build
 	cp bin/neighbor /usr/local/bin
 
 run: build
-	./bin/neighbor -file=$(PWD)/config.json
+	./bin/neighbor --file=config.json
+
+clean:
+	rm -rf _external-projects-wd
 
 test:
 	go test -v ./...
 
-.PHONY: setup build install run test
+.PHONY: setup build install run clean test

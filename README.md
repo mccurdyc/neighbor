@@ -1,36 +1,25 @@
 # neighbor
 ---
 
-That friendly neighbor that makes the neighborhood a great place by helping everyone
-get things done.
+neighbor is a tool for running an arbitrary command on multiple GitHub projects
+in a concurrent fashion.
 
 ## Requirements
 + [Go](https://golang.org/dl/) >= 1.11
-    1. `mkdir $HOME/go`
 
 ## Creating an External Command
-neighbor allows you to specify an arbitrary command to be run on a per-repository basis.
-The command should be executable from the command-line.
+neighbor allows you to specify an arbitrary command to be run on a per-repository basis
+with the repository as the working directory.
+
+_The command should be executable from the command-line._
 
 Some sample external commands can be found in the [examples](./_examples).
 
 ## Getting Started
 1. Installing the project
-    1. `cd $HOME/go`
-    2. `go get -u -v github.com/mccurdyc/neighbor`
+    1. `go get -u github.com/mccurdyc/neighbor`
 
-2. Prepare neighbor for Execution
-    ```bash
-    make setup
-    ```
-
-    The `setup` `make` target will do the following:
-    + Create a `config.json` file from the `sample.config.json` file
-      + You still need to update the access token in the config file to use your personal access token.
-      + The setup target will check to see if you have already copied the sample.config.json to
-        config.json for execution. If you have, the setup will not overwrite the config.json file.
-
-3. Generate a [Personal Access Token on GitHub](https://github.com/settings/tokens)
+2. Generate a [Personal Access Token on GitHub](https://github.com/settings/tokens)
     neighbor uses token authentication for communicating and authenticating with GitHub.
     To read more about GitHub's token authentication, visit [this site](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/).
 
@@ -46,6 +35,17 @@ Some sample external commands can be found in the [examples](./_examples).
         ...
       }
       ```
+3. Prepare neighbor for Execution
+    ```bash
+    make
+    ```
+
+    This will do the following:
+    + Check that you have the appropriate Go version
+    + Create a `config.json` file from the `sample.config.json` file
+    + You still need to update the access token in the config file to use your personal access token.
+    + Enable [Go modules](https://github.com/golang/go/wiki/Modules) by setting `GO111MODULE=on`
+
 4. Executing an external command on each of the GitHub projects returned from the query
     ```bash
     make run
