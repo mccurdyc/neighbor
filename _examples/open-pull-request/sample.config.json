@@ -1,0 +1,6 @@
+{
+  "access_token": "1234567890abcdefghijklmnopqrstuvwxyz",
+  "search_type": "repository",
+  "query": "org:neighbor-projects NOT minikube",
+  "external_command": "open-pull-request 1234567890abcdefghijklmnopqrstuvwxyz"
+}
