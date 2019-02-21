@@ -1,19 +1,28 @@
 # neighbor
 ---
 
-neighbor is a tool for running an arbitrary command on multiple GitHub projects
-in a concurrent fashion.
+neighbor is a tool for cloning a set of repositories from GitHub specified by a
+[GitHub Search Query](https://help.github.com/en/articles/searching-for-repositories)
+and running a cli command or executable binary, concurrently.
+
+## Background
+
+neighbor aims to offload the work of cloning a set of repositories and executing
+a cli command or executable binary on each of those repositories, so that developers
+and researchers can focus on what they are actually trying to accomplish.
+
+### How does neighbor save developers and researchers time?
++ Abstracting GitHub API interaction (searching and cloning).
++ Abstracting concurrency (if enabled).
 
 ## Requirements
 + [Go](https://golang.org/dl/) >= 1.11
 
-## Creating an External Command
-neighbor allows you to specify an arbitrary command to be run on a per-repository basis
-with the repository as the working directory.
+## Executing a Cli Command/Executable Binary
+neighbor allows you to specify a cli command or executable binary to be run on
+a per-repository basis with **the repository as the working directory**.
 
-_The command should be executable from the command-line._
-
-Some sample external commands can be found in the [examples](./_examples).
+Sample custom binaries can be found in the [examples](./_examples).
 
 ## Getting Started
 1. Installing the project
