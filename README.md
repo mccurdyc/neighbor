@@ -26,7 +26,7 @@ Sample custom binaries can be found in the [examples](./_examples).
 
 ## Getting Started
 1. Installing the project
-    1. `go get -u github.com/mccurdyc/neighbor`
+    1. `go get -u -v github.com/mccurdyc/neighbor/...`
 
 2. Generate a [Personal Access Token on GitHub](https://github.com/settings/tokens)
     neighbor uses token authentication for communicating and authenticating with GitHub.
@@ -37,35 +37,42 @@ Sample custom binaries can be found in the [examples](./_examples).
     Authentication is required to both increase the [GitHub API limitations](https://godoc.org/github.com/google/go-github/github#hdr-Rate_Limiting)
     as well as access private content (e.g., repositories, gists, etc.).
 
-    + Add the generated token to the configuration file (`config.json`).
+    + If using a config file, add the generated token to the file
       ```json
       {
         "access_token": "yourAccessToken1234567890abcdefghijklmnopqrstuvwxyz",
         ...
       }
       ```
-3. Prepare neighbor for Execution
-    ```bash
-    make
-    ```
+    + If not using a config file, use the `--access_token` command-line argument
 
-    This will do the following:
-    + Check that you have the appropriate Go version
-    + Create a `config.json` file from the `sample.config.json` file
-    + You still need to update the access token in the config file to use your personal access token.
-    + Enable [Go modules](https://github.com/golang/go/wiki/Modules) by setting `GO111MODULE=on`
+3. Usage
+```bash
+$ neighbor -h
+Usage of neighbor:
+  -access_token string
+        your personal GitHub access token.
+  -external_command string
+        the command to execute on each project returned from the GitHub search query.
+  -file string
+        absolute filepath to config [default: "$(pwd)/config.json"].
+  -query string
+        the GitHub search query to execute.
+  -search_type string
+        the type of GitHub search to perform.
+```
 
-4. Executing an external command on each of the GitHub projects returned from the query
-    ```bash
-    make run
-    ```
+  Example:
+  ```bash
+  export GITHUB_ACCESS_TOKEN="your-token-here"
+  neighbor --access_token=$GITHUB_ACCESS_TOKEN --search_type="repository" --query="org:neighbor-projects NOT minikube" --external_command="ls -al"
+  ```
 
-    The `run` target will first build neighbor and then invoke neighbor pointed
-    at the config.json file in the root of the project.
+  This will create a directory `_external-projects-wd` wherever you run `neighbor`
+  with the cloned contents of the repositories.
 
-    neighbor will use the GitHub query specified in the config file to find projects
-    on GitHub. neighbor will then clone and run the external command in each of the
-    projects' directory, sequentially using the command specified in the config, `external_command`.
+  If you just want the output from the external command, pipe `neighbor` to a file (`neighbor ... > out.txt`).
+  The logging of neighbor should be separate from the results of the command.
 
 ## License
 + [GNU General Public License Version 3](./LICENSE)
