@@ -8,19 +8,19 @@ and running a cli command or executable binary, concurrently.
 ## Background
 
 neighbor aims to offload the work of cloning a set of repositories and executing
-a cli command or executable binary on each of those repositories, so that developers
+a cli command or executable binary on each of the cloned repositories, so that developers
 and researchers can focus on what they are actually trying to accomplish.
 
 ### How does neighbor save developers and researchers time?
-+ Abstracting GitHub API interaction (searching and cloning).
-+ Abstracting concurrency (if enabled).
++ Abstracting GitHub API interaction (searching and cloning)
++ Abstracting concurrency
 
 ## Requirements
-+ [Go](https://golang.org/dl/) >= 1.11
++ [Go](https://golang.org/dl/) >= 1.11 (in order to guarantee reproducible builds)
 
 ## Executing a Cli Command/Executable Binary
 neighbor allows you to specify a cli command or executable binary to be run on
-a per-repository basis with **the repository as the working directory**.
+a per-repository basis with **each repository as the working directory**.
 
 Sample custom binaries can be found in the [examples](./_examples).
 
