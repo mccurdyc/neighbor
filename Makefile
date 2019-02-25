@@ -22,6 +22,9 @@ run: build
 clean:
 	rm -rf _external-projects-wd
 
+clean:
+	rm -rf _external-projects-wd
+
 test:
 	go test -v ./...
 
