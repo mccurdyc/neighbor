@@ -18,12 +18,6 @@ and researchers can focus on what they are actually trying to accomplish.
 ## Requirements
 + [Go](https://golang.org/dl/) >= 1.11 (in order to guarantee reproducible builds)
 
-## Executing a Cli Command/Executable Binary
-neighbor allows you to specify a cli command or executable binary to be run on
-a per-repository basis with **each repository as the working directory**.
-
-Sample custom binaries can be found in the [examples](./_examples).
-
 ## Getting Started
 1. Installing the project
     1. `go get -u -v github.com/mccurdyc/neighbor/...`
@@ -73,6 +67,12 @@ Usage of neighbor:
 
   If you just want the output from the external command, pipe `neighbor` to a file (`neighbor ... > out.txt`).
   The logging of neighbor should be separate from the results of the command.
+
+## Executing a Cli Command/Executable Binary
+neighbor allows you to specify a cli command or executable binary to be run on
+a per-repository basis with **each repository as the working directory**.
+
+Sample custom binaries can be found in the [examples](./_examples).
 
 ## License
 + [GNU General Public License Version 3](./LICENSE)
