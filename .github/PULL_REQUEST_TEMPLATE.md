@@ -3,13 +3,13 @@
 <!-- Select one:
 -->
 
--[ ] api-change
--[ ] bugfix
--[ ] cleanup/refactor
--[ ] design
--[ ] documentation
--[ ] test
--[ ] new feature
+- [ ] api-change
+- [ ] bugfix
+- [ ] cleanup/refactor
+- [ ] design
+- [ ] documentation
+- [ ] test
+- [ ] new feature
 
 **What this PR does / why we need it**:
 
