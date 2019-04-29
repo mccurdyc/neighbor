@@ -42,7 +42,7 @@ func parseCmd(rest string) []string {
 
 	for pos := 0; pos <= len(rest); pos += chWidth {
 		if pos != len(rest) {
-			ch, chWidth = utf8.DecodeRuneInString(rest[pos:])
+			_, _, _, _, _ = ch, chWidth, utf8.DecodeRuneInString, rest, pos
 		}
 
 		if phase == inSpaces { // Looking for start of word

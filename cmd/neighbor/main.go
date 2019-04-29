@@ -10,8 +10,8 @@ import (
 	"syscall"
 
 	// external
+	"github.com/golang/glog"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 
 	// internal
 	"github.com/mccurdyc/neighbor/pkg/config"
@@ -29,12 +29,10 @@ func main() {
 
 	flag.Parse()
 
-	l := log.New()
-
+	// #TODO - would be nice to be able to override
 	wd, err := os.Getwd()
 	if err != nil {
-		l.Errorf("error getting current directory: %+v", err)
-		os.Exit(1)
+		glog.Exitf("error getting current directory: %+v", err)
 	}
 
 	c, cancel := context.WithCancel(context.Background())
@@ -50,7 +48,6 @@ func main() {
 			SearchType:  *searchType,
 			Query:       *query,
 		},
-		Logger:       l,
 		NeighborDir:  wd,
 		ExtResultDir: fmt.Sprintf("%s/%s", wd, "_external-projects-wd"), // go tools handle directories prepended with '_' differently; often they ignore those directories
 	}
@@ -86,35 +83,22 @@ func main() {
 	}
 
 	ctx.SetExternalCmd(cmd)
-	ctx.Logger.Infof("external command to be run on each project: %s\n", ctx.ExternalCmd)
+
+	glog.V(1).Infof("external command to be run on each project: %s\n", ctx.ExternalCmd)
 
 	if err = ctx.Validate(); err != nil {
-		err = errors.Wrap(err, "error validating context")
-		ctx.Logger.Error(err)
-		os.Exit(1)
-	}
-
-	ll := os.Getenv("LOG_LEVEL")
-	if len(ll) == 0 {
-		ctx.Logger.SetLevel(log.InfoLevel)
-	} else {
-		ll, err := log.ParseLevel(ll)
-		if err != nil {
-			ctx.Logger.SetLevel(log.InfoLevel)
-		}
-		ctx.Logger.SetLevel(ll)
+		glog.Exit(errors.Wrap(err, "error validating context"))
 	}
 
 	err = ctx.CreateExternalResultDir()
 	if err != nil {
-		l.Errorf("error creating results directory: %+v", err)
-		os.Exit(1)
+		glog.Exitf("error creating results directory: %+v", err)
 	}
 
 	svc := github.NewSearchService(github.Connect(ctx.Context, ctx.GitHub.AccessToken))
 	res, resp := svc.Search(ctx, ctx.GitHub.SearchType, ctx.GitHub.Query, nil)
-	ctx.Logger.Debugf("github search response: %+v", resp)
-	ctx.Logger.Debugf("github search result: %+v", res)
+	glog.V(3).Info("github search response: %+v", resp)
+	glog.V(2).Info("github search result: %+v", res)
 
 	ch := github.CloneFromResult(ctx, svc.Client, res)
 	external.Run(ctx, ch)

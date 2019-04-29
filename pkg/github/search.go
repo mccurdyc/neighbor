@@ -2,11 +2,10 @@ package github
 
 import (
 	// stdlib
-
-	// external
-
 	"strings"
 
+	// external
+	"github.com/golang/glog"
 	"github.com/google/go-github/github"
 
 	// internal
@@ -56,7 +55,7 @@ func NewSearchService(c *github.Client) *SearchService {
 // build the search queries.
 // TODO(D): continue adding other search options
 func (s *SearchService) Search(ctx *neighbor.Ctx, t string, q string, opts *github.SearchOptions) (interface{}, *github.Response) {
-	ctx.Logger.Infof("performing GitHub search with query: %s", q)
+	glog.V(1).Infof("performing GitHub search with query: %s", q)
 
 	switch strings.ToLower(t) {
 	case "repository":
@@ -66,17 +65,17 @@ func (s *SearchService) Search(ctx *neighbor.Ctx, t string, q string, opts *gith
 		// the query needs to be '+' delimited (e.g., "simpletest+language:go+user:mccurdyc")
 		res, resp, err := s.Client.Search.Repositories(ctx.Context, q, opts)
 		if err != nil {
-			ctx.Logger.Errorf("error searching for repositories: %+v", err)
+			glog.Errorf("error searching for repositories: %+v", err)
 		}
 		return res, resp
 	case "code":
 		res, resp, err := s.Client.Search.Code(ctx.Context, q, opts)
 		if err != nil {
-			ctx.Logger.Errorf("error searching for code: %+v", err)
+			glog.Errorf("error searching for code: %+v", err)
 		}
 		return res, resp
 	default:
-		ctx.Logger.Infof("query type \"%s\" not accepted", t)
+		glog.Errorf("query type \"%s\" not accepted", t)
 		return nil, nil
 	}
 }

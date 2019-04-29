@@ -8,8 +8,6 @@ import (
 	"strings"
 
 	// external
-	log "github.com/sirupsen/logrus"
-
 	// internal
 	"github.com/mccurdyc/neighbor/pkg/config"
 )
@@ -22,7 +20,6 @@ type Ctx struct {
 	Config       *config.Config  // the query config created by the user
 	Context      context.Context // a context object required by the GitHub SDK
 	GitHub       GitHubDetails
-	Logger       *log.Logger // the logger to be used throughout the project
 	NeighborDir  string
 	ExtResultDir string   // where the external projects and test results will be stored
 	ExternalCmd  []string // external project command and args
