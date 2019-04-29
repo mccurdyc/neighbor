@@ -97,8 +97,8 @@ func main() {
 
 	svc := github.NewSearchService(github.Connect(ctx.Context, ctx.GitHub.AccessToken))
 	res, resp := svc.Search(ctx, ctx.GitHub.SearchType, ctx.GitHub.Query, nil)
-	glog.V(3).Info("github search response: %+v", resp)
-	glog.V(2).Info("github search result: %+v", res)
+	glog.V(3).Infof("github search response: %+v", resp)
+	glog.V(2).Infof("github search result: %+v", res)
 
 	ch := github.CloneFromResult(ctx, svc.Client, res)
 	external.Run(ctx, ch)
