@@ -2,6 +2,7 @@ package github
 
 import (
 	// stdlib
+
 	"strings"
 
 	// external
@@ -55,7 +56,7 @@ func NewSearchService(c *github.Client) *SearchService {
 // build the search queries.
 // TODO(D): continue adding other search options
 func (s *SearchService) Search(ctx *neighbor.Ctx, t string, q string, opts *github.SearchOptions) (interface{}, *github.Response) {
-	glog.V(1).Infof("performing GitHub search with query: %s", q)
+	glog.V(2).Infof("performing GitHub search with query: %s", q)
 
 	switch strings.ToLower(t) {
 	case "repository":

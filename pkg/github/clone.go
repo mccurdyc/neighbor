@@ -2,6 +2,7 @@ package github
 
 import (
 	// stdlib
+
 	"fmt"
 	"os"
 	"sync"
@@ -77,7 +78,7 @@ func cloneRepo(ctx *neighbor.Ctx, repo github.Repository, ch chan<- ExternalProj
 	glog.V(3).Infof("%+v", repo)
 
 	dir := fmt.Sprintf("%s/%s", ctx.ExtResultDir, *repo.Name)
-	glog.V(1).Infof("created directory: %s", dir)
+	glog.V(2).Infof("created directory: %s", dir)
 
 	_, err := git.PlainClone(dir, false, &git.CloneOptions{
 		// you must use BasicAuth with your GitHub Access Token as the password
@@ -87,14 +88,14 @@ func cloneRepo(ctx *neighbor.Ctx, repo github.Repository, ch chan<- ExternalProj
 			Password: ctx.GitHub.AccessToken,
 		},
 		URL:      repo.GetCloneURL(),
-		Progress: os.Stdout,
+		Progress: os.Stderr, // Stderr so that it can be surpressed without interfering with external command output
 	})
 	if err != nil {
 		glog.Errorf("failed to clone project %s with error: %+v", *repo.Name, err)
 		return
 	}
 
-	glog.V(1).Infof("cloned: %s", repo.GetCloneURL())
+	glog.V(2).Infof("cloned: %s", repo.GetCloneURL())
 
 	// this should block until there is a receiver
 	select {

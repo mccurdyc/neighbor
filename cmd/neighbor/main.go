@@ -84,7 +84,7 @@ func main() {
 
 	ctx.SetExternalCmd(cmd)
 
-	glog.V(1).Infof("external command to be run on each project: %s\n", ctx.ExternalCmd)
+	glog.V(2).Infof("external command to be run on each project: %s\n", ctx.ExternalCmd)
 
 	if err = ctx.Validate(); err != nil {
 		glog.Exit(errors.Wrap(err, "error validating context"))
