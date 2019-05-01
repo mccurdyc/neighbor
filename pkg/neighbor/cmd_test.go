@@ -1,8 +1,11 @@
 package neighbor
 
 import (
+	// stdlib
 	"reflect"
 	"testing"
+	// external
+	// internal
 )
 
 const (

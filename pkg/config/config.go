@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/prometheus/common/log"
 	// external
+	"github.com/golang/glog"
 	// internal
 )
 
@@ -38,14 +38,14 @@ func New(fp string) *Config {
 func (cfg *Config) Parse() {
 	f, err := os.Open(cfg.FilePath)
 	if err != nil {
-		log.Errorf("error opening config file %+v", err)
+		glog.Errorf("error opening config file %+v", err)
 		return
 	}
 	defer f.Close()
 
 	c := &Contents{}
 	if err := parse(f, c); err != nil {
-		log.Errorf("error parsing config file %+v", err)
+		glog.Errorf("error parsing config file %+v", err)
 		return
 	}
 

@@ -2,16 +2,19 @@ package external
 
 import (
 	// stdlib
+
 	"os"
 	"os/exec"
 	"runtime"
 	"sync"
 
 	// external
+	"github.com/golang/glog"
+	"github.com/pkg/errors"
+
 	// internal
 	"github.com/mccurdyc/neighbor/pkg/github"
 	"github.com/mccurdyc/neighbor/pkg/neighbor"
-	"github.com/pkg/errors"
 )
 
 // Run runs an arbitrary command specified in the Ctx on each project
@@ -38,7 +41,7 @@ func Run(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
 					}
 
 					if err := run(ctx, p); err != nil {
-						ctx.Logger.Error(err)
+						glog.Error(err)
 					}
 				}
 			}
@@ -49,7 +52,7 @@ func Run(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
 }
 
 func run(ctx *neighbor.Ctx, p github.ExternalProject) error {
-	ctx.Logger.Infof("running external command on %s", p.Name)
+	glog.V(2).Infof("running external command on %s", p.Name)
 	err := os.Chdir(p.Directory)
 	if err != nil {
 		return errors.Wrap(err, "error changing into project working directory")

@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	// external
+	"github.com/golang/glog"
 	"github.com/google/go-github/github"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport/http"
@@ -74,10 +75,10 @@ func CloneFromResult(ctx *neighbor.Ctx, c *github.Client, d interface{}) <-chan 
 // and informs downstream consumers of the project name and where it is located
 // on the machine.
 func cloneRepo(ctx *neighbor.Ctx, repo github.Repository, ch chan<- ExternalProject) {
-	ctx.Logger.Debugf("%+v", repo)
+	glog.V(3).Infof("%+v", repo)
 
 	dir := fmt.Sprintf("%s/%s", ctx.ExtResultDir, *repo.Name)
-	ctx.Logger.Infof("created directory: %s", dir)
+	glog.V(2).Infof("created directory: %s", dir)
 
 	_, err := git.PlainClone(dir, false, &git.CloneOptions{
 		// you must use BasicAuth with your GitHub Access Token as the password
@@ -87,14 +88,14 @@ func cloneRepo(ctx *neighbor.Ctx, repo github.Repository, ch chan<- ExternalProj
 			Password: ctx.GitHub.AccessToken,
 		},
 		URL:      repo.GetCloneURL(),
-		Progress: os.Stdout,
+		Progress: os.Stderr, // Stderr so that it can be surpressed without interfering with external command output
 	})
 	if err != nil {
-		ctx.Logger.Errorf("failed to clone project %s with error: %+v", *repo.Name, err)
+		glog.Errorf("failed to clone project %s with error: %+v", *repo.Name, err)
 		return
 	}
 
-	ctx.Logger.Infof("cloned: %s", repo.GetCloneURL())
+	glog.V(2).Infof("cloned: %s", repo.GetCloneURL())
 
 	// this should block until there is a receiver
 	select {
