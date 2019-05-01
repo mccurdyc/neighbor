@@ -2,6 +2,7 @@ package external
 
 import (
 	// stdlib
+
 	"os"
 	"os/exec"
 	"runtime"
@@ -51,7 +52,7 @@ func Run(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
 }
 
 func run(ctx *neighbor.Ctx, p github.ExternalProject) error {
-	glog.V(1).Infof("running external command on %s", p.Name)
+	glog.V(2).Infof("running external command on %s", p.Name)
 	err := os.Chdir(p.Directory)
 	if err != nil {
 		return errors.Wrap(err, "error changing into project working directory")
