@@ -16,13 +16,13 @@ and researchers can focus on what they are actually trying to accomplish.
 + Abstracting concurrency
 
 ## Requirements
-+ [Go](https://golang.org/dl/) >= 1.11 (in order to guarantee reproducible builds)
++ [Go](https://golang.org/dl/)
 
 ## Getting Started
 1. Installing the project
-    1. `go get -u -v github.com/mccurdyc/neighbor/...`
+    1. `go get -u github.com/mccurdyc/neighbor/...`
 
-2. Generate a [Personal Access Token on GitHub](https://github.com/settings/tokens)
+2. Generate a [GitHub Personal Access Token](https://github.com/settings/tokens)
     neighbor uses token authentication for communicating and authenticating with GitHub.
     To read more about GitHub's token authentication, visit [this site](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/).
 
@@ -42,18 +42,31 @@ and researchers can focus on what they are actually trying to accomplish.
 
 3. Usage
 ```bash
-$ neighbor -h
 Usage of neighbor:
   -access_token string
         your personal GitHub access token.
+  -alsologtostderr
+        log to standard error as well as files
   -external_command string
         the command to execute on each project returned from the GitHub search query.
   -file string
         absolute filepath to config [default: "$(pwd)/config.json"].
+  -log_backtrace_at value
+        when logging hits line file:N, emit a stack trace
+  -log_dir string
+        If non-empty, write log files in this directory
+  -logtostderr
+        log to standard error instead of files
   -query string
         the GitHub search query to execute.
   -search_type string
         the type of GitHub search to perform.
+  -stderrthreshold value
+        logs at or above this threshold go to stderr
+  -v value
+        log level for V logs
+  -vmodule value
+        comma-separated list of pattern=N settings for file-filtered logging
 ```
 
   Example:
@@ -65,10 +78,8 @@ Usage of neighbor:
   This will create a directory `_external-projects-wd` wherever you run `neighbor`
   with the cloned contents of the repositories.
 
-  If you just want the output from the external command, pipe `neighbor` to a file (`neighbor ... > out.txt`).
-  The logging of neighbor should be separate from the results of the command.
-
 ## Executing a Cli Command/Executable Binary
+
 neighbor allows you to specify a cli command or executable binary to be run on
 a per-repository basis with **each repository as the working directory**.
 
