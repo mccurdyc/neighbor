@@ -14,5 +14,3 @@ your_username ALL=NOPASSWD:/absolute/path/to/script
 
 Then, where you will invoke neighbor from, you will need to `source` your `sudoers`
 file to acquire the recent changes.
-
-
