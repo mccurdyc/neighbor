@@ -1,5 +1,6 @@
 # neighbor
----
+
+[![codecov](https://codecov.io/gh/mccurdyc/neighbor/branch/master/graph/badge.svg)](https://codecov.io/gh/mccurdyc/neighbor) [![Maintainability](https://api.codeclimate.com/v1/badges/8b473a645aab19597124/maintainability)](https://codeclimate.com/github/mccurdyc/neighbor/maintainability)
 
 neighbor is a tool for cloning a set of repositories from GitHub specified by a
 [GitHub Search Query](https://help.github.com/en/articles/searching-for-repositories)
