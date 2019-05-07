@@ -5,7 +5,6 @@ jobs:
       - image: circleci/golang:1.12
     working_directory: /go/src/github.com/mccurdyc/neighbor
     environment:
-      - CODECOV_TOKEN="f99376f0-075d-4e6b-b622-c2750825193f"
       - GO111MODULE=on
     steps:
       - checkout
