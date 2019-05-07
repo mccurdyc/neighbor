@@ -20,12 +20,6 @@ import (
 	"github.com/mccurdyc/neighbor/pkg/neighbor"
 )
 
-var Usage = func() {
-	fmt.Fprint(flag.CommandLine.Output(), "\nUsage: neighbor (--file=<config-file> | --access_token=<github-access-token> --query=<github-query> --external_command=<command>) [--search_type=repository]\n\n")
-	flag.PrintDefaults()
-	fmt.Fprint(flag.CommandLine.Output(), "\n")
-}
-
 func main() {
 	fp := flag.String("file", "", "Absolute filepath to the config file.")
 	tkn := flag.String("access_token", "", "Your personal GitHub access token.")
@@ -38,7 +32,7 @@ func main() {
 
 	if *help == true ||
 		(*fp == "" && (*tkn == "" || *query == "" || *externalCmd == "" || *searchType == "")) {
-		Usage()
+		usage()
 		os.Exit(1)
 	}
 
@@ -115,4 +109,13 @@ func main() {
 
 	ch := github.CloneFromResult(ctx, svc.Client, res)
 	external.Run(ctx, ch)
+}
+
+// usage prints the usage and the supported flags.
+// #TODO: move to a pkg/cmd (this would be not be nicely-importable) package or
+// something so that we can print the help menu from other packages.
+func usage() {
+	fmt.Fprint(flag.CommandLine.Output(), "\nUsage: neighbor (--file=<config-file> | --access_token=<github-access-token> --query=<github-query> --external_command=<command>) [--search_type=repository]\n\n")
+	flag.PrintDefaults()
+	fmt.Fprint(flag.CommandLine.Output(), "\n")
 }
