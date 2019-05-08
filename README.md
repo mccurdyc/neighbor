@@ -75,8 +75,8 @@ Usage: neighbor (--file=<config-file> | --query=<github-query> --external_comman
 
   Example:
   ```bash
-  export GITHUB_ACCESS_TOKEN="your-token-here"
-  neighbor --access_token=$GITHUB_ACCESS_TOKEN --query="org:neighbor-projects NOT minikube" --external_command="ls -al"
+  make build
+  ./bin/neighbor --query="org:neighbor-projects NOT minikube" --external_command="ls -al"
   ```
 
   This will create a directory `_external-projects-wd` wherever you run `neighbor`
