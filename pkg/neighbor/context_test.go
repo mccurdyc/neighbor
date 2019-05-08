@@ -1,8 +1,6 @@
 package neighbor
 
 import (
-	// stdlib
-	"fmt"
 	"testing"
 	// external
 	// internal
@@ -17,7 +15,7 @@ func TestValidate(t *testing.T) {
 		{
 			"empty-context",
 			&Ctx{},
-			"access token cannot be empty",
+			"search type, query, external command cannot be empty",
 		},
 		{
 			"empty-access-token",
@@ -29,7 +27,7 @@ func TestValidate(t *testing.T) {
 				},
 				ExternalCmd: []string{"ls", "-al"},
 			},
-			"access token cannot be empty",
+			"",
 		},
 		{
 			"empty-search-type",
@@ -53,7 +51,7 @@ func TestValidate(t *testing.T) {
 				},
 				ExternalCmd: []string{"ls", "-al"},
 			},
-			"github query cannot be empty",
+			"query cannot be empty",
 		},
 		{
 			"empty-external-command",
@@ -73,8 +71,15 @@ func TestValidate(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			actual := c.ctx.Validate()
 
+			if actual == nil {
+				if c.expectedErr != "" {
+					t.Errorf("\n\tACTUAL: %+v\n\tEXPECTED: %+v\n", actual, c.expectedErr)
+				}
+				return
+			}
+
 			if actual.Error() != c.expectedErr {
-				fmt.Printf("\n\tACTUAL: %+v\n\tEXPECTED: %+v\n", actual.Error(), c.expectedErr)
+				t.Errorf("\n\tACTUAL: %+v\n\tEXPECTED: %+v\n", actual.Error(), c.expectedErr)
 			}
 		})
 	}
