@@ -21,13 +21,20 @@ import (
 )
 
 func main() {
-	fp := flag.String("file", "", "absolute filepath to config [default: \"$(pwd)/config.json\"].")
-	tkn := flag.String("access_token", "", "your personal GitHub access token.")
-	searchType := flag.String("search_type", "", "the type of GitHub search to perform.")
-	query := flag.String("query", "", "the GitHub search query to execute.")
-	externalCmd := flag.String("external_command", "", "the command to execute on each project returned from the GitHub search query.")
+	fp := flag.String("file", "", "Absolute filepath to the config file.")
+	tkn := flag.String("access_token", "", "Your personal GitHub access token.")
+	searchType := flag.String("search_type", "repository", "The type of GitHub search to perform.")
+	query := flag.String("query", "", "The GitHub search query to execute.")
+	externalCmd := flag.String("external_command", "", "The command to execute on each project returned from the GitHub search query.")
+	help := flag.Bool("help", false, "Print this help menu.")
 
 	flag.Parse()
+
+	if *help == true ||
+		(*fp == "" && (*tkn == "" || *query == "" || *externalCmd == "" || *searchType == "")) {
+		usage()
+		os.Exit(1)
+	}
 
 	// #TODO - would be nice to be able to override
 	wd, err := os.Getwd()
@@ -102,4 +109,13 @@ func main() {
 
 	ch := github.CloneFromResult(ctx, svc.Client, res)
 	external.Run(ctx, ch)
+}
+
+// usage prints the usage and the supported flags.
+// #TODO: move to a pkg/cmd (this would be not be nicely-importable) package or
+// something so that we can print the help menu from other packages.
+func usage() {
+	fmt.Fprint(flag.CommandLine.Output(), "\nUsage: neighbor (--file=<config-file> | --access_token=<github-access-token> --query=<github-query> --external_command=<command>) [--search_type=repository]\n\n")
+	flag.PrintDefaults()
+	fmt.Fprint(flag.CommandLine.Output(), "\n")
 }

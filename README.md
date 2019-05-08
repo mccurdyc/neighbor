@@ -43,15 +43,18 @@ and researchers can focus on what they are actually trying to accomplish.
 
 3. Usage
 ```bash
-Usage of neighbor:
+Usage: neighbor (--file=<config-file> | --access_token=<github-access-token> --query=<github-query> --external_command=<command>) [--search_type=repository]
+
   -access_token string
-        your personal GitHub access token.
+        Your personal GitHub access token.
   -alsologtostderr
         log to standard error as well as files
   -external_command string
-        the command to execute on each project returned from the GitHub search query.
+        The command to execute on each project returned from the GitHub search query.
   -file string
-        absolute filepath to config [default: "$(pwd)/config.json"].
+        Absolute filepath to the config file.
+  -help
+        Print this help menu.
   -log_backtrace_at value
         when logging hits line file:N, emit a stack trace
   -log_dir string
@@ -59,9 +62,9 @@ Usage of neighbor:
   -logtostderr
         log to standard error instead of files
   -query string
-        the GitHub search query to execute.
+        The GitHub search query to execute.
   -search_type string
-        the type of GitHub search to perform.
+        The type of GitHub search to perform. (default "repository")
   -stderrthreshold value
         logs at or above this threshold go to stderr
   -v value
@@ -73,7 +76,7 @@ Usage of neighbor:
   Example:
   ```bash
   export GITHUB_ACCESS_TOKEN="your-token-here"
-  neighbor --access_token=$GITHUB_ACCESS_TOKEN --search_type="repository" --query="org:neighbor-projects NOT minikube" --external_command="ls -al"
+  neighbor --access_token=$GITHUB_ACCESS_TOKEN --query="org:neighbor-projects NOT minikube" --external_command="ls -al"
   ```
 
   This will create a directory `_external-projects-wd` wherever you run `neighbor`
@@ -81,10 +84,10 @@ Usage of neighbor:
 
 ## Executing a Cli Command/Executable Binary
 
-neighbor allows you to specify a cli command or executable binary to be run on
+neighbor allows you to specify an executable binary to be run on
 a per-repository basis with **each repository as the working directory**.
 
-Sample custom binaries can be found in the [examples](./_examples).
+Examples can be found in the [examples](./_examples).
 
 ## License
 + [GNU General Public License Version 3](./LICENSE)
