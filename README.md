@@ -43,10 +43,10 @@ and researchers can focus on what they are actually trying to accomplish.
 
 3. Usage
 ```bash
-Usage: neighbor (--file=<config-file> | --access_token=<github-access-token> --query=<github-query> --external_command=<command>) [--search_type=repository]
+Usage: neighbor (--file=<config-file> | --query=<github-query> --external_command=<command>) [--access_token=<github-access-token>] [--search_type=repository]
 
   -access_token string
-        Your personal GitHub access token.
+        Your personal GitHub access token. This is required to access private repositories and increases rate limits.
   -alsologtostderr
         log to standard error as well as files
   -external_command string
