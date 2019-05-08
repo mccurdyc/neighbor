@@ -1,8 +1,8 @@
 build:
 	go fmt ./...
-	go build -race -o bin/neighbor cmd/neighbor/main.go
+	GO111MODULE=on go build -race -o bin/neighbor cmd/neighbor/main.go
 
 test:
-	go test -v ./...
+	GO111MODULE=on go test -v ./...
 
 .PHONY: build test
