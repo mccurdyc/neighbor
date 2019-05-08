@@ -63,7 +63,6 @@ func (s *SearchService) Search(ctx *neighbor.Ctx, t string, q string, opts *gith
 		// TODO: do pagination on resp
 		// API Reference: https://developer.github.com/v3/search/
 		// Find repositories via various criteria. This method returns up to 100 results per page.
-		// the query needs to be '+' delimited (e.g., "simpletest+language:go+user:mccurdyc")
 		res, resp, err := s.Client.Search.Repositories(ctx.Context, q, opts)
 		if err != nil {
 			glog.Errorf("error searching for repositories: %+v", err)

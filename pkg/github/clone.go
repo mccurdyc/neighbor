@@ -80,16 +80,21 @@ func cloneRepo(ctx *neighbor.Ctx, repo github.Repository, ch chan<- ExternalProj
 	dir := fmt.Sprintf("%s/%s", ctx.ExtResultDir, *repo.Name)
 	glog.V(2).Infof("created directory: %s", dir)
 
-	_, err := git.PlainClone(dir, false, &git.CloneOptions{
-		// you must use BasicAuth with your GitHub Access Token as the password
-		// and the Username can be anything.
-		Auth: &http.BasicAuth{
-			Username: "abc123", // yes, this can be anything except an empty string
-			Password: ctx.GitHub.AccessToken,
-		},
+	opts := &git.CloneOptions{
 		URL:      repo.GetCloneURL(),
 		Progress: os.Stderr, // Stderr so that it can be surpressed without interfering with external command output
-	})
+	}
+
+	if len(ctx.GitHub.AccessToken) > 0 {
+		// you must use BasicAuth with your GitHub Access Token as the password
+		// and the Username can be anything.
+		opts.Auth = &http.BasicAuth{
+			Username: "abc123", // yes, this can be anything except an empty string
+			Password: ctx.GitHub.AccessToken,
+		}
+	}
+
+	_, err := git.PlainClone(dir, false, opts)
 	if err != nil {
 		glog.Errorf("failed to clone project %s with error: %+v", *repo.Name, err)
 		return

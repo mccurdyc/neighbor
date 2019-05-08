@@ -57,10 +57,6 @@ func (ctx *Ctx) Validate() error {
 	// search types, AccessToken fits the format of a token, etc.)
 	var failed []string
 
-	if len(ctx.GitHub.AccessToken) == 0 {
-		failed = append(failed, "access token")
-	}
-
 	if len(ctx.GitHub.SearchType) == 0 {
 		failed = append(failed, "search type")
 	}
