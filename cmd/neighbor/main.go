@@ -26,6 +26,7 @@ func main() {
 	searchType := flag.String("search_type", "repository", "The type of GitHub search to perform.")
 	query := flag.String("query", "", "The GitHub search query to execute.")
 	externalCmd := flag.String("external_command", "", "The command to execute on each project returned from the GitHub search query.")
+	clean := flag.Bool("clean", true, "Delete the directory created for each repository after running the external command against the repository.")
 	help := flag.Bool("help", false, "Print this help menu.")
 
 	flag.Parse()
@@ -97,25 +98,50 @@ func main() {
 		glog.Exit(errors.Wrap(err, "error validating context"))
 	}
 
-	err = ctx.CreateExternalResultDir()
+	err = os.Mkdir(ctx.ExtResultDir, os.ModePerm)
 	if err != nil {
-		glog.Exitf("error creating results directory: %+v", err)
+		glog.Exitf("error creating collated directory: %+v", err)
+	}
+
+	if *clean {
+		defer func() {
+			err := os.RemoveAll(ctx.ExtResultDir)
+			if err != nil {
+				glog.Exitf("error removing collated directory: %+v", err)
+			}
+		}()
 	}
 
 	svc := github.NewSearchService(github.Connect(ctx.Context, ctx.GitHub.AccessToken))
 	res, resp := svc.Search(ctx, ctx.GitHub.SearchType, ctx.GitHub.Query, nil)
+
 	glog.V(3).Infof("github search response: %+v", resp)
 	glog.V(2).Infof("github search result: %+v", res)
 
-	ch := github.CloneFromResult(ctx, svc.Client, res)
-	external.Run(ctx, ch)
+	clonedReposCh := github.CloneFromResult(ctx, svc.Client, res)
+	subjectedReposCh := external.Run(ctx, clonedReposCh)
+
+	f := func(r github.ExternalProject) {
+		glog.V(2).Infof("finished running external command on %s", r.Name)
+	}
+
+	if *clean {
+		f = func(r github.ExternalProject) {
+			err := os.RemoveAll(r.Directory)
+			if err != nil {
+				glog.Errorf("error removing directory: %s", r.Directory)
+			}
+		}
+	}
+
+	for r := range subjectedReposCh {
+		f(r)
+	}
 }
 
 // usage prints the usage and the supported flags.
-// #TODO: move to a pkg/cmd (this would be not be nicely-importable) package or
-// something so that we can print the help menu from other packages.
 func usage() {
-	fmt.Fprint(flag.CommandLine.Output(), "\nUsage: neighbor (--file=<config-file> | --query=<github-query> --external_command=<command>) [--access_token=<github-access-token>] [--search_type=repository]\n\n")
+	fmt.Fprint(flag.CommandLine.Output(), "\nUsage: neighbor (--file=<config-file> | --query=<github-query> --external_command=<command>) [--access_token=<github-access-token>] [--search_type=<repository|code>] [--clean=<true|false>]\n\n")
 	flag.PrintDefaults()
 	fmt.Fprint(flag.CommandLine.Output(), "\n")
 }
