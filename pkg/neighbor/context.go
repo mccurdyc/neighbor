@@ -4,7 +4,6 @@ import (
 	// stdlib
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	// external
@@ -37,16 +36,6 @@ type GitHubDetails struct {
 // NewCtx creates a pointer to a new neighbor context.
 func NewCtx() *Ctx {
 	return &Ctx{}
-}
-
-// CreateExternalResultDir creates the external projects and results directory if
-// it doesn't exist.
-func (ctx *Ctx) CreateExternalResultDir() error {
-	_, err := os.Stat(ctx.ExtResultDir)
-	if os.IsNotExist(err) {
-		return os.Mkdir(ctx.ExtResultDir, os.ModePerm)
-	}
-	return nil
 }
 
 // Validate ensures that all of the required configuration attributes are set

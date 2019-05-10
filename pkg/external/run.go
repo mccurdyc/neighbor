@@ -5,8 +5,6 @@ import (
 
 	"os"
 	"os/exec"
-	"runtime"
-	"sync"
 
 	// external
 	"github.com/golang/glog"
@@ -25,30 +23,28 @@ import (
 //
 // When each worker has recieved the empty channel signal from the pipeline, we
 // are finished.
-func Run(ctx *neighbor.Ctx, ch <-chan github.ExternalProject) {
-	var wg sync.WaitGroup
+func Run(ctx *neighbor.Ctx, in <-chan github.ExternalProject) <-chan github.ExternalProject {
+	out := make(chan github.ExternalProject) // an unbuffered, synchronous channel for guaranteed delivery
 
-	for i := 0; i < runtime.NumCPU(); i++ {
-		wg.Add(1)
-
-		go func() {
-			for {
-				select {
-				case p, ok := <-ch:
-					if !ok {
-						wg.Done()
-						return
-					}
-
-					if err := run(ctx, p); err != nil {
-						glog.Error(err)
-					}
+	go func() {
+		for {
+			select {
+			case project, ok := <-in:
+				if !ok {
+					close(out)
+					return
 				}
-			}
-		}()
-	}
 
-	wg.Wait()
+				if err := run(ctx, project); err != nil {
+					glog.Error(err)
+				}
+
+				out <- project
+			}
+		}
+	}()
+
+	return out
 }
 
 func run(ctx *neighbor.Ctx, p github.ExternalProject) error {

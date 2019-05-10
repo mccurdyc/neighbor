@@ -21,34 +21,27 @@ and researchers can focus on what they are actually trying to accomplish.
 
 ## Getting Started
 1. Installing the project
-    1. `go get -u github.com/mccurdyc/neighbor/...`
 
-2. Generate a [GitHub Personal Access Token](https://github.com/settings/tokens)
-    neighbor uses token authentication for communicating and authenticating with GitHub.
-    To read more about GitHub's token authentication, visit [this site](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/).
+    `go get -u github.com/mccurdyc/neighbor/...`
 
-    > You can create a personal access token and use it in place of a password when performing Git operations over HTTPS with Git on the command line or the API.
+2. Usage
 
-    Authentication is required to both increase the [GitHub API limitations](https://godoc.org/github.com/google/go-github/github#hdr-Rate_Limiting)
-    as well as access private content (e.g., repositories, gists, etc.).
+    ```bash
+    make build
+    ./bin/neighbor --query="org:neighbor-projects NOT minikube" --external_command="ls -al"
+    ```
 
-    + If using a config file, add the generated token to the file
-      ```json
-      {
-        "access_token": "yourAccessToken1234567890abcdefghijklmnopqrstuvwxyz",
-        ...
-      }
-      ```
-    + If not using a config file, use the `--access_token` command-line argument
+## Help Menu
 
-3. Usage
 ```bash
-Usage: neighbor (--file=<config-file> | --query=<github-query> --external_command=<command>) [--access_token=<github-access-token>] [--search_type=repository]
+Usage: neighbor (--file=<config-file> | --query=<github-query> --external_command=<command>) [--access_token=<github-access-token>] [--search_type=<repository|code>] [--clean=<true|false>]
 
   -access_token string
         Your personal GitHub access token. This is required to access private repositories and increases rate limits.
   -alsologtostderr
         log to standard error as well as files
+  -clean
+        Delete the directory created for each repository after running the external command against the repository. (default true)
   -external_command string
         The command to execute on each project returned from the GitHub search query.
   -file string
@@ -73,21 +66,34 @@ Usage: neighbor (--file=<config-file> | --query=<github-query> --external_comman
         comma-separated list of pattern=N settings for file-filtered logging
 ```
 
-  Example:
-  ```bash
-  make build
-  ./bin/neighbor --query="org:neighbor-projects NOT minikube" --external_command="ls -al"
-  ```
-
-  This will create a directory `_external-projects-wd` wherever you run `neighbor`
-  with the cloned contents of the repositories.
-
 ## Executing a Cli Command/Executable Binary
 
 neighbor allows you to specify an executable binary to be run on
 a per-repository basis with **each repository as the working directory**.
 
 Examples can be found in the [examples](./_examples).
+
+## FAQ
+
+### What about private repositories?
+
+Generate a [GitHub Personal Access Token](https://github.com/settings/tokens)
+neighbor uses token authentication for communicating and authenticating with GitHub.
+To read more about GitHub's token authentication, visit [this site](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/).
+
+> You can create a personal access token and use it in place of a password when performing Git operations over HTTPS with Git on the command line or the API.
+
+Authentication is required to both increase the [GitHub API limitations](https://godoc.org/github.com/google/go-github/github#hdr-Rate_Limiting)
+as well as access private content (e.g., repositories, gists, etc.).
+
++ Use the `--access_token` command-line argument
++ If using a config file, add the generated token to the file
+  ```json
+  {
+    "access_token": "yourAccessToken1234567890abcdefghijklmnopqrstuvwxyz",
+    ...
+  }
+  ```
 
 ## License
 + [GNU General Public License Version 3](./LICENSE)
