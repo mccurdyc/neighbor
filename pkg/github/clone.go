@@ -58,6 +58,21 @@ func CloneFromResult(ctx *neighbor.Ctx, c *github.Client, d interface{}) <-chan 
 				}
 			}(r)
 		}
+	case *github.CodeSearchResult:
+		wg.Add(len(t.CodeResults))
+
+		for _, r := range t.CodeResults {
+			go func(repo github.Repository) {
+				select {
+				case <-ctx.Context.Done():
+					wg.Done()
+					return
+				default:
+					cloneRepo(ctx, repo, ch)
+					wg.Done()
+				}
+			}(*r.Repository)
+		}
 	}
 
 	go func() {
@@ -68,6 +83,15 @@ func CloneFromResult(ctx *neighbor.Ctx, c *github.Client, d interface{}) <-chan 
 	}()
 
 	return ch
+}
+
+// getCloneURL returns a GitHub git clone URL e.g., https://github.com/mccurdyc/neighbor.git
+func getCloneURL(repo github.Repository) string {
+	url := repo.GetCloneURL()
+	if url == "" {
+		url = fmt.Sprintf("%s.git", repo.GetHTMLURL())
+	}
+	return url
 }
 
 // cloneRepo clones a repository using a GitHub personal access token, given a
@@ -81,7 +105,7 @@ func cloneRepo(ctx *neighbor.Ctx, repo github.Repository, ch chan<- ExternalProj
 	glog.V(2).Infof("created directory: %s", dir)
 
 	opts := &git.CloneOptions{
-		URL:      repo.GetCloneURL(),
+		URL:      getCloneURL(repo),
 		Progress: os.Stderr, // Stderr so that it can be surpressed without interfering with external command output
 	}
 
