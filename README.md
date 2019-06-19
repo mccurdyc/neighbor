@@ -3,14 +3,16 @@
 [![codecov](https://codecov.io/gh/mccurdyc/neighbor/branch/master/graph/badge.svg)](https://codecov.io/gh/mccurdyc/neighbor) [![Maintainability](https://api.codeclimate.com/v1/badges/8b473a645aab19597124/maintainability)](https://codeclimate.com/github/mccurdyc/neighbor/maintainability)
 
 neighbor is a tool for cloning a set of repositories from GitHub specified by a
-[GitHub Search Query](https://help.github.com/en/articles/searching-for-repositories)
+[GitHub Search Query](https://developer.github.com/v3/search/)
 and running a cli command or executable binary, concurrently.
 
 ## Background
 
 neighbor aims to offload the work of cloning a set of repositories and executing
-a cli command or executable binary on each of the cloned repositories, so that developers
+an executable binary on each of the cloned repositories, so that developers
 and researchers can focus on what they are actually trying to accomplish.
+
+neighbor uses [v3 of GitHub's API](https://developer.github.com/v3/).
 
 ### How does neighbor save developers and researchers time?
 + Abstracting GitHub API interaction (searching and cloning)
@@ -26,15 +28,22 @@ and researchers can focus on what they are actually trying to accomplish.
 
 2. Usage
 
+    Repository Search Example:
     ```bash
     make build
     ./bin/neighbor --query="org:neighbor-projects NOT minikube" --external_command="ls -al"
     ```
 
+    Code Search Example:
+    ```bash
+    make build
+    ./bin/neighbor --search_type="code" --access_token="abc123" --query="filename:test.py path:/ language:python" --external_command="ls -al"
+    ```
+
 ## Help Menu
 
 ```bash
-Usage: neighbor (--file=<config-file> | --query=<github-query> --external_command=<command>) [--access_token=<github-access-token>] [--search_type=<repository|code>] [--clean=<true|false>]
+Usage: neighbor (--file=<config-file> | [--search_type="repository"] [--access_token=<github-access-token>] --query=<github-query> --external_command=<command> | --search_type="code" --access_token=<github-access-token> --query=<github-query> --external_command=<command>) [--clean=<[true|false>]
 
   -access_token string
         Your personal GitHub access token. This is required to access private repositories and increases rate limits.
