@@ -118,7 +118,7 @@ func main() {
 	glog.V(3).Infof("github search response: %+v", resp)
 	glog.V(2).Infof("github search result: %+v", res)
 
-	clonedReposCh := github.CloneFromResult(ctx, svc.Client, res)
+	clonedReposCh := github.CloneFromResult(ctx, res)
 	subjectedReposCh := external.Run(ctx, clonedReposCh)
 
 	f := func(r github.ExternalProject) {
