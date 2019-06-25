@@ -37,7 +37,7 @@ type ExternalProject struct {
 // directory, a project is cloned into that directory. After creating temp directories
 // and cloning projects into the respective directory, the context is updated
 // with the project names and the temporary directories.
-func CloneFromResult(ctx *neighbor.Ctx, c *github.Client, d interface{}) <-chan ExternalProject {
+func CloneFromResult(ctx *neighbor.Ctx, d interface{}) <-chan ExternalProject {
 	ch := make(chan ExternalProject) // an unbuffered, synchronous channel for guaranteed delivery
 
 	var wg sync.WaitGroup
