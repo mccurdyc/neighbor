@@ -15,7 +15,6 @@ import (
 
 	// internal
 	"github.com/mccurdyc/neighbor/pkg/config"
-	"github.com/mccurdyc/neighbor/pkg/external"
 	"github.com/mccurdyc/neighbor/pkg/github"
 	"github.com/mccurdyc/neighbor/pkg/neighbor"
 )
@@ -112,31 +111,31 @@ func main() {
 		}()
 	}
 
-	svc := github.NewSearchService(github.Connect(ctx.Context, ctx.GitHub.AccessToken))
-	res, resp := svc.Search(ctx, ctx.GitHub.SearchType, ctx.GitHub.Query, nil)
-
-	glog.V(3).Infof("github search response: %+v", resp)
-	glog.V(2).Infof("github search result: %+v", res)
-
-	clonedReposCh := github.CloneFromResult(ctx, res)
-	subjectedReposCh := external.Run(ctx, clonedReposCh)
-
-	f := func(r github.ExternalProject) {
-		glog.V(2).Infof("finished running external command on %s", r.Name)
+	searcher := github.NewSearcher(github.Connect(ctx.Context, ctx.GitHub.AccessToken), github.SearchType(ctx.GitHub.SearchType))
+	results, err := github.Search(ctx.Context, searcher, ctx.GitHub.Query, nil)
+	if err != nil {
+		fmt.Println(err)
 	}
 
-	if *clean {
-		f = func(r github.ExternalProject) {
-			err := os.RemoveAll(r.Directory)
-			if err != nil {
-				glog.Errorf("error removing directory: %s", r.Directory)
-			}
-		}
-	}
-
-	for r := range subjectedReposCh {
-		f(r)
-	}
+	// clonedReposCh := github.Clone(ctx, repos)
+	// subjectedReposCh := external.Run(ctx, clonedReposCh)
+	//
+	// f := func(r github.ExternalProject) {
+	// 	glog.V(2).Infof("finished running external command on %s", r.Name)
+	// }
+	//
+	// if *clean {
+	// 	f = func(r github.ExternalProject) {
+	// 		err := os.RemoveAll(r.Directory)
+	// 		if err != nil {
+	// 			glog.Errorf("error removing directory: %s", r.Directory)
+	// 		}
+	// 	}
+	// }
+	//
+	// for r := range subjectedReposCh {
+	// 	f(r)
+	// }
 }
 
 // usage prints the usage and the supported flags.

@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+	"errors"
 	"math"
 
 	"github.com/google/go-github/github"
@@ -11,8 +12,7 @@ const maxPageSize = 100 // https://developer.github.com/v3/#pagination
 
 // SearchOptions specifies optional parameters to a GitHub search request.
 type SearchOptions struct {
-	NumDesiredResults int
-
+	NumDesiredResults   int
 	gitHubSearchOptions *github.SearchOptions
 }
 
@@ -31,15 +31,15 @@ type Searcher interface {
 	search(context.Context, string, *github.SearchOptions) ([]Result, error)
 }
 
-func NewSearcher(c *github.Client, t SearchType) Searcher {
+func NewSearcher(c *github.Client, t SearchType) (Searcher, error) {
 	switch t {
 	case Repository:
-		return NewRepositorySearcher(c)
+		return NewRepositorySearcher(c), nil
 	case Code:
-		return NewCodeSearcher(c)
+		return NewCodeSearcher(c), nil
+	default:
+		return nil, errors.New("unsupported search type")
 	}
-
-	return nil
 }
 
 func Search(ctx context.Context, s Searcher, query string, opts *SearchOptions) ([]Result, error) {
