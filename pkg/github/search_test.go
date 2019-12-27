@@ -140,7 +140,7 @@ func Test_Search(t *testing.T) {
 			},
 			want: want{
 				res: []*github.Repository{},
-				err: ErrRequestNotFulfilled,
+				err: ErrFewerResultsThanDesired,
 			},
 		},
 
