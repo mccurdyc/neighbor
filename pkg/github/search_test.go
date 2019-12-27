@@ -170,6 +170,61 @@ func Test_Search(t *testing.T) {
 				err: nil,
 			},
 		},
+
+		"two_results_pages": {
+			input: input{
+				s: &mockSearcher{
+					res: Results{
+						Repositories: []*github.Repository{
+							&github.Repository{ID: ptrToInt(1)},
+							&github.Repository{ID: ptrToInt(2)},
+							&github.Repository{ID: ptrToInt(3)},
+						},
+						response: &github.Response{NextPage: 1},
+					},
+					err: nil,
+				},
+				query: "",
+				opts:  searchOptions{numDesiredResults: 5, maxPageSize: 3},
+			},
+			want: want{
+				res: []*github.Repository{
+					&github.Repository{ID: ptrToInt(1)},
+					&github.Repository{ID: ptrToInt(2)},
+					&github.Repository{ID: ptrToInt(3)},
+					&github.Repository{ID: ptrToInt(1)},
+					&github.Repository{ID: ptrToInt(2)},
+				},
+				err: nil,
+			},
+		},
+
+		"three_results_pages": {
+			input: input{
+				s: &mockSearcher{
+					res: Results{
+						Repositories: []*github.Repository{
+							&github.Repository{ID: ptrToInt(1)},
+							&github.Repository{ID: ptrToInt(2)},
+						},
+						response: &github.Response{NextPage: 1},
+					},
+					err: nil,
+				},
+				query: "",
+				opts:  searchOptions{numDesiredResults: 5, maxPageSize: 2},
+			},
+			want: want{
+				res: []*github.Repository{
+					&github.Repository{ID: ptrToInt(1)},
+					&github.Repository{ID: ptrToInt(2)},
+					&github.Repository{ID: ptrToInt(1)},
+					&github.Repository{ID: ptrToInt(2)},
+					&github.Repository{ID: ptrToInt(1)},
+				},
+				err: nil,
+			},
+		},
 	}
 
 	for name, tt := range tests {
@@ -190,7 +245,7 @@ func Test_Search(t *testing.T) {
 			}
 
 			if ok := errorCmp(gotErr, tt.want.err); !ok {
-				t.Errorf("Search(tt.input) = %v, wantErr %v", gotErr, tt.want.err)
+				t.Errorf("Search(%+v) = %v, wantErr %v", tt.input, gotErr, tt.want.err)
 			}
 		})
 	}
