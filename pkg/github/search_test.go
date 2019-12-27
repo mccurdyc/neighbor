@@ -1,0 +1,197 @@
+package github
+
+import (
+	"context"
+	"errors"
+	"net/url"
+	"reflect"
+	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-github/github"
+)
+
+func Test_NewSearcher(t *testing.T) {
+	type input struct {
+		c *github.Client
+		t SearchType
+	}
+
+	type want struct {
+		s   Searcher
+		err error
+	}
+
+	ghClient := github.Client{BaseURL: &url.URL{Host: "localhost"}}
+
+	var tests = map[string]struct {
+		input input
+		want  want
+	}{
+		"unsupported_search_type": {
+			input: input{
+				c: &ghClient,
+				t: SearchType("unsupported"),
+			},
+			want: want{
+				s:   nil,
+				err: errors.New("unsupported search type"),
+			},
+		},
+
+		"code_search_type": {
+			input: input{
+				c: &ghClient,
+				t: SearchType("code"),
+			},
+			want: want{
+				s:   &CodeSearcher{client: &ghClient},
+				err: nil,
+			},
+		},
+
+		"repository_search_type": {
+			input: input{
+				c: &ghClient,
+				t: SearchType("repository"),
+			},
+			want: want{
+				s:   &RepositorySearcher{client: &ghClient},
+				err: nil,
+			},
+		},
+
+		"repository_search_type_improper_casing_returns_error": {
+			input: input{
+				c: &ghClient,
+				t: SearchType("RepositorY"),
+			},
+			want: want{
+				s:   nil,
+				err: errors.New("unsupported search type"),
+			},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			got, gotErr := NewSearcher(tt.input.c, tt.input.t)
+
+			if !reflect.DeepEqual(got, tt.want.s) {
+				t.Errorf("NewSearcher(%+v): want '%s', got '%s'", tt.input, tt.want.s, got)
+			}
+
+			// https://github.com/google/go-cmp/issues/24
+			errorCmp := func(x, y error) bool {
+				if x == nil || y == nil {
+					return x == nil && y == nil
+				}
+				return x.Error() == y.Error()
+			}
+
+			if ok := errorCmp(gotErr, tt.want.err); !ok {
+				t.Errorf("NewSearcher(tt.input) = %v, want %v", gotErr, tt.want.err)
+			}
+		})
+	}
+}
+
+type mockSearcher struct {
+	res Results
+	err error
+}
+
+func (m *mockSearcher) search(_ context.Context, _ string, _ *github.SearchOptions) (Results, error) {
+	return m.res, m.err
+}
+
+func (m *mockSearcher) processResults(_ interface{}, _ *github.Response) Results {
+	return m.res
+}
+
+func ptrToInt(i int64) *int64 {
+	return &i
+}
+
+func Test_Search(t *testing.T) {
+	type input struct {
+		s     Searcher
+		query string
+		opts  searchOptions
+	}
+
+	type want struct {
+		res []*github.Repository
+		err error
+	}
+
+	var tests = map[string]struct {
+		input input
+		want  want
+	}{
+		"no_results_returned": {
+			input: input{
+				s: &mockSearcher{
+					res: Results{},
+					err: nil,
+				},
+				query: "",
+				opts:  searchOptions{numDesiredResults: 3, maxPageSize: 5},
+			},
+			want: want{
+				res: []*github.Repository{},
+				err: ErrRequestNotFulfilled,
+			},
+		},
+
+		"single_results_page": {
+			input: input{
+				s: &mockSearcher{
+					res: Results{
+						Repositories: []*github.Repository{
+							&github.Repository{ID: ptrToInt(1)},
+							&github.Repository{ID: ptrToInt(2)},
+							&github.Repository{ID: ptrToInt(3)},
+							&github.Repository{ID: ptrToInt(4)},
+							&github.Repository{ID: ptrToInt(5)},
+						},
+					},
+					err: nil,
+				},
+				query: "",
+				opts:  searchOptions{numDesiredResults: 3, maxPageSize: 5},
+			},
+			want: want{
+				res: []*github.Repository{
+					&github.Repository{ID: ptrToInt(1)},
+					&github.Repository{ID: ptrToInt(2)},
+					&github.Repository{ID: ptrToInt(3)},
+				},
+				err: nil,
+			},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+
+			got, gotErr := Search(context.TODO(), tt.input.s, tt.input.query, tt.input.opts)
+
+			if diff := cmp.Diff(tt.want.res, got); diff != "" {
+				t.Errorf("Search() mismatch (-want +got):\n%s", diff)
+			}
+
+			// https://github.com/google/go-cmp/issues/24
+			errorCmp := func(x, y error) bool {
+				if x == nil || y == nil {
+					return x == nil && y == nil
+				}
+				return x.Error() == y.Error()
+			}
+
+			if ok := errorCmp(gotErr, tt.want.err); !ok {
+				t.Errorf("Search(tt.input) = %v, wantErr %v", gotErr, tt.want.err)
+			}
+		})
+	}
+}
