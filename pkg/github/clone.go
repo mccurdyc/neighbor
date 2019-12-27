@@ -32,47 +32,29 @@ type ExternalProject struct {
 	Directory string
 }
 
-// CloneFromResult creates temporary directories where the base path is that of os.TempDir
+// CloneRepositories creates temporary directories where the base path is that of os.TempDir
 // and the rest of the path is the Name of the repository. After creating a temporary
 // directory, a project is cloned into that directory. After creating temp directories
 // and cloning projects into the respective directory, the context is updated
 // with the project names and the temporary directories.
-func CloneFromResult(ctx *neighbor.Ctx, d interface{}) <-chan ExternalProject {
+func CloneRepositories(ctx *neighbor.Ctx, repositories []*github.Repository) <-chan ExternalProject {
 	ch := make(chan ExternalProject) // an unbuffered, synchronous channel for guaranteed delivery
 
 	var wg sync.WaitGroup
 
-	switch t := d.(type) {
-	case *github.RepositoriesSearchResult:
-		wg.Add(len(t.Repositories))
+	wg.Add(len(repositories))
 
-		for _, r := range t.Repositories {
-			go func(repo github.Repository) {
-				select {
-				case <-ctx.Context.Done():
-					wg.Done()
-					return
-				default:
-					cloneRepo(ctx, repo, ch)
-					wg.Done()
-				}
-			}(r)
-		}
-	case *github.CodeSearchResult:
-		wg.Add(len(t.CodeResults))
-
-		for _, r := range t.CodeResults {
-			go func(repo github.Repository) {
-				select {
-				case <-ctx.Context.Done():
-					wg.Done()
-					return
-				default:
-					cloneRepo(ctx, repo, ch)
-					wg.Done()
-				}
-			}(*r.Repository)
-		}
+	for _, r := range repositories {
+		go func(repo github.Repository) {
+			select {
+			case <-ctx.Context.Done():
+				wg.Done()
+				return
+			default:
+				cloneRepo(ctx, repo, ch)
+				wg.Done()
+			}
+		}(*r)
 	}
 
 	go func() {

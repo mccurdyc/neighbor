@@ -15,6 +15,7 @@ import (
 
 	// internal
 	"github.com/mccurdyc/neighbor/pkg/config"
+	"github.com/mccurdyc/neighbor/pkg/external"
 	"github.com/mccurdyc/neighbor/pkg/github"
 	"github.com/mccurdyc/neighbor/pkg/neighbor"
 )
@@ -111,31 +112,38 @@ func main() {
 		}()
 	}
 
-	searcher := github.NewSearcher(github.Connect(ctx.Context, ctx.GitHub.AccessToken), github.SearchType(ctx.GitHub.SearchType))
-	results, err := github.Search(ctx.Context, searcher, ctx.GitHub.Query, nil)
+	searcher, err := github.NewSearcher(github.Connect(ctx.Context, ctx.GitHub.AccessToken), github.SearchType(ctx.GitHub.SearchType))
 	if err != nil {
-		fmt.Println(err)
+		glog.Exitf("error creating searcher: %+v", err)
 	}
 
-	// clonedReposCh := github.Clone(ctx, repos)
-	// subjectedReposCh := external.Run(ctx, clonedReposCh)
-	//
-	// f := func(r github.ExternalProject) {
-	// 	glog.V(2).Infof("finished running external command on %s", r.Name)
-	// }
-	//
-	// if *clean {
-	// 	f = func(r github.ExternalProject) {
-	// 		err := os.RemoveAll(r.Directory)
-	// 		if err != nil {
-	// 			glog.Errorf("error removing directory: %s", r.Directory)
-	// 		}
-	// 	}
-	// }
-	//
-	// for r := range subjectedReposCh {
-	// 	f(r)
-	// }
+	numDesiredResults := 100 // TODO: read the number of desired results from a config value
+	repositories, err := github.Search(ctx.Context, searcher, ctx.GitHub.Query, github.SearchOptions().WithNumberOfResults(numDesiredResults))
+	if err != nil {
+		glog.Exitf("error searching GitHub: %+v", err)
+	}
+
+	fmt.Printf("results: %+v", repositories)
+
+	clonedReposCh := github.CloneRepositories(ctx, repositories)
+	subjectedReposCh := external.Run(ctx, clonedReposCh)
+
+	f := func(r github.ExternalProject) {
+		glog.V(2).Infof("finished running external command on %s", r.Name)
+	}
+
+	if *clean {
+		f = func(r github.ExternalProject) {
+			err := os.RemoveAll(r.Directory)
+			if err != nil {
+				glog.Errorf("error removing directory: %s", r.Directory)
+			}
+		}
+	}
+
+	for r := range subjectedReposCh {
+		f(r)
+	}
 }
 
 // usage prints the usage and the supported flags.
