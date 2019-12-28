@@ -1,11 +1,26 @@
 package github
 
 import (
+	"net/url"
+	"reflect"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-github/github"
 )
+
+func Test_NewCodeSearcher(t *testing.T) {
+	ghClient := github.Client{BaseURL: &url.URL{Host: "localhost"}}
+
+	want := &CodeSearcher{client: &ghClient}
+	got := NewCodeSearcher(&ghClient)
+
+	eq := reflect.DeepEqual(got, want)
+
+	if !eq {
+		t.Errorf("NewCodeSearcher() mismatch:\n\twant: %+v\n\tgot: %+v", want, got)
+	}
+}
 
 func Test_CodeSearcher_processResults(t *testing.T) {
 	cs := &CodeSearcher{}
