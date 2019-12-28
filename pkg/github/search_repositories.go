@@ -30,8 +30,8 @@ func (rs *RepositorySearcher) processResults(r interface{}, resp *github.Respons
 
 	repos := make([]*github.Repository, 0, res.GetTotal())
 
-	for _, repo := range res.Repositories {
-		repos = append(repos, &repo)
+	for i := range res.Repositories {
+		repos = append(repos, &res.Repositories[i])
 	}
 
 	return Results{
