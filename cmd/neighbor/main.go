@@ -112,13 +112,18 @@ func main() {
 		}()
 	}
 
-	svc := github.NewSearchService(github.Connect(ctx.Context, ctx.GitHub.AccessToken))
-	res, resp := svc.Search(ctx, ctx.GitHub.SearchType, ctx.GitHub.Query, nil)
+	searcher, err := github.NewSearcher(github.Connect(ctx.Context, ctx.GitHub.AccessToken), github.SearchType(ctx.GitHub.SearchType))
+	if err != nil {
+		glog.Exitf("error creating searcher: %+v", err)
+	}
 
-	glog.V(3).Infof("github search response: %+v", resp)
-	glog.V(2).Infof("github search result: %+v", res)
+	numDesiredResults := 100 // TODO: read the number of desired results from a config value
+	repositories, err := github.Search(ctx.Context, searcher, ctx.GitHub.Query, github.SearchOptions().WithNumberOfResults(numDesiredResults))
+	if err != nil {
+		glog.V(2).Infof("error searching GitHub: %+v", err)
+	}
 
-	clonedReposCh := github.CloneFromResult(ctx, res)
+	clonedReposCh := github.CloneRepositories(ctx, repositories)
 	subjectedReposCh := external.Run(ctx, clonedReposCh)
 
 	f := func(r github.ExternalProject) {
