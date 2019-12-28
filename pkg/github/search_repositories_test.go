@@ -57,6 +57,41 @@ func Test_processResults(t *testing.T) {
 				},
 			},
 		},
+
+		"multiple_pages_three_results": {
+			input: input{
+				res: &github.RepositoriesSearchResult{
+					Total:             ptrToInt(6),
+					IncompleteResults: ptrToBool(true),
+					Repositories: []github.Repository{
+						github.Repository{ID: ptrToInt64(1)},
+						github.Repository{ID: ptrToInt64(2)},
+						github.Repository{ID: ptrToInt64(3)},
+					},
+				},
+				resp: &github.Response{
+					NextPage:  1,
+					PrevPage:  0,
+					FirstPage: 0,
+					LastPage:  1,
+				},
+			},
+			want: want{
+				Results: Results{
+					Repositories: []*github.Repository{
+						&github.Repository{ID: ptrToInt64(1)},
+						&github.Repository{ID: ptrToInt64(2)},
+						&github.Repository{ID: ptrToInt64(3)},
+					},
+					response: &github.Response{
+						NextPage:  1,
+						PrevPage:  0,
+						FirstPage: 0,
+						LastPage:  1,
+					},
+				},
+			},
+		},
 	}
 
 	for name, tt := range tests {
