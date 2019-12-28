@@ -24,8 +24,8 @@ neighbor uses [v3 of GitHub's REST API](https://developer.github.com/v3/).
 + Doing the above efficiently
 
 ## Requirements
-+ [Go `>1.13`](https://golang.org/dl/)
-  + Why `>1.13`?
++ [Go `1.13+`](https://golang.org/dl/)
+  + Why `1.13+`?
     + [Updates to error handling](https://blog.golang.org/go1.13-errors)
     + [Updates to modules](https://golang.org/doc/go1.13#modules) for dependency management
   + [Installing Go documentation](https://golang.org/doc/install)
