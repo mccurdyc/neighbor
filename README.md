@@ -45,8 +45,8 @@ neighbor uses [v3 of GitHub's REST API](https://developer.github.com/v3/).
 
     Code Search Example:
 
-    _Note: [GitHub requires users to be logged in to search code](https://developer.github.com/v3/search/#search-code)
-    even in public repositories._
+    _Note: [GitHub requires users to be logged in to search code](https://developer.github.com/v3/search/#search-code).
+    Even in public repositories._
 
     ```bash
     make build
