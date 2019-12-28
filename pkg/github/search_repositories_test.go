@@ -7,7 +7,7 @@ import (
 	"github.com/google/go-github/github"
 )
 
-func Test_processResults(t *testing.T) {
+func Test_RepositorySearcher_processResults(t *testing.T) {
 	rs := &RepositorySearcher{}
 
 	type input struct {
@@ -100,11 +100,11 @@ func Test_processResults(t *testing.T) {
 			got := rs.processResults(tt.input.res, tt.input.resp)
 
 			if diff := cmp.Diff(tt.want.Results.Repositories, got.Repositories); diff != "" {
-				t.Errorf("processResults() Repositories: mismatch (-want +got):\n%s", diff)
+				t.Errorf("RepositorySearcher.processResults() Repositories: mismatch (-want +got):\n%s", diff)
 			}
 
 			if diff := cmp.Diff(tt.want.Results.response, got.response, cmp.AllowUnexported()); diff != "" {
-				t.Errorf("processResults() github response: mismatch (-want +got):\n%s", diff)
+				t.Errorf("RepositorySearcher.processResults() github response: mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
