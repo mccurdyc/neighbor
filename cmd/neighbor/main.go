@@ -123,8 +123,6 @@ func main() {
 		glog.V(2).Infof("error searching GitHub: %+v", err)
 	}
 
-	fmt.Printf("results: %+v", repositories)
-
 	clonedReposCh := github.CloneRepositories(ctx, repositories)
 	subjectedReposCh := external.Run(ctx, clonedReposCh)
 
