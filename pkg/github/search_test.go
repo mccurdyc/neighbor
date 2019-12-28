@@ -26,6 +26,173 @@ func Test_SearchOptions(t *testing.T) {
 	}
 }
 
+func Test_WitNumberOfResults(t *testing.T) {
+	type input struct {
+		so searchOptions
+		n  int
+	}
+
+	type want struct {
+		so searchOptions
+	}
+
+	var tests = map[string]struct {
+		input input
+		want  want
+	}{
+		"empty_search_options": {
+			input: input{
+				so: searchOptions{numDesiredResults: 0, maxPageSize: 0, gitHubSearchOptions: github.SearchOptions{}},
+				n:  1,
+			},
+			want: want{
+				so: searchOptions{numDesiredResults: 1, maxPageSize: 0, gitHubSearchOptions: github.SearchOptions{}},
+			},
+		},
+
+		"non_empty_search_options": {
+			input: input{
+				so: searchOptions{numDesiredResults: 1, maxPageSize: 1, gitHubSearchOptions: github.SearchOptions{
+					Sort:      "sort",
+					Order:     "order",
+					TextMatch: true,
+					ListOptions: github.ListOptions{
+						Page:    1,
+						PerPage: 1,
+					},
+				}},
+				n: 5,
+			},
+			want: want{
+				so: searchOptions{numDesiredResults: 5, maxPageSize: 1, gitHubSearchOptions: github.SearchOptions{
+					Sort:      "sort",
+					Order:     "order",
+					TextMatch: true,
+					ListOptions: github.ListOptions{
+						Page:    1,
+						PerPage: 1,
+					},
+				}},
+			},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := tt.input.so.WithNumberOfResults(tt.input.n)
+
+			if diff := cmp.Diff(tt.want.so.maxPageSize, got.maxPageSize, cmp.AllowUnexported()); diff != "" {
+				t.Errorf("WithNumberOfResults() maxPageSize: mismatch (-want +got):\n%s", diff)
+			}
+
+			if diff := cmp.Diff(tt.want.so.numDesiredResults, got.numDesiredResults, cmp.AllowUnexported()); diff != "" {
+				t.Errorf("WithNumberOfResults() numDesiredResults: mismatch (-want +got):\n%s", diff)
+			}
+
+			if diff := cmp.Diff(tt.want.so.gitHubSearchOptions, got.gitHubSearchOptions, cmp.AllowUnexported()); diff != "" {
+				t.Errorf("WithNumberOfResults() gitHubSearchOptions: mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func Test_WithGitHubOptions(t *testing.T) {
+	type input struct {
+		so                  searchOptions
+		gitHubSearchOptions github.SearchOptions
+	}
+
+	type want struct {
+		so searchOptions
+	}
+
+	var tests = map[string]struct {
+		input input
+		want  want
+	}{
+		"empty_search_options": {
+			input: input{
+				so: searchOptions{numDesiredResults: 0, maxPageSize: 0, gitHubSearchOptions: github.SearchOptions{}},
+				gitHubSearchOptions: github.SearchOptions{
+					Sort:      "sort",
+					Order:     "order",
+					TextMatch: true,
+					ListOptions: github.ListOptions{
+						Page:    2,
+						PerPage: 2,
+					},
+				},
+			},
+			want: want{
+				so: searchOptions{numDesiredResults: 0, maxPageSize: 0, gitHubSearchOptions: github.SearchOptions{
+					Sort:      "sort",
+					Order:     "order",
+					TextMatch: true,
+					ListOptions: github.ListOptions{
+						Page:    2,
+						PerPage: 2,
+					},
+				},
+				},
+			},
+		},
+
+		"non_empty_search_options": {
+			input: input{
+				so: searchOptions{numDesiredResults: 1, maxPageSize: 1, gitHubSearchOptions: github.SearchOptions{
+					Sort:      "old",
+					Order:     "old",
+					TextMatch: true,
+					ListOptions: github.ListOptions{
+						Page:    1,
+						PerPage: 1,
+					},
+				},
+				},
+				gitHubSearchOptions: github.SearchOptions{
+					Sort:      "new",
+					Order:     "new",
+					TextMatch: true,
+					ListOptions: github.ListOptions{
+						Page:    2,
+						PerPage: 2,
+					},
+				},
+			},
+			want: want{
+				so: searchOptions{numDesiredResults: 1, maxPageSize: 1, gitHubSearchOptions: github.SearchOptions{
+					Sort:      "new",
+					Order:     "new",
+					TextMatch: true,
+					ListOptions: github.ListOptions{
+						Page:    2,
+						PerPage: 2,
+					},
+				},
+				},
+			},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := tt.input.so.WithGitHubOptions(tt.input.gitHubSearchOptions)
+
+			if diff := cmp.Diff(tt.want.so.maxPageSize, got.maxPageSize, cmp.AllowUnexported()); diff != "" {
+				t.Errorf("WithGitHubOptions() maxPageSize: mismatch (-want +got):\n%s", diff)
+			}
+
+			if diff := cmp.Diff(tt.want.so.numDesiredResults, got.numDesiredResults, cmp.AllowUnexported()); diff != "" {
+				t.Errorf("WithGitHubOptions() numDesiredResults: mismatch (-want +got):\n%s", diff)
+			}
+
+			if diff := cmp.Diff(tt.want.so.gitHubSearchOptions, got.gitHubSearchOptions, cmp.AllowUnexported()); diff != "" {
+				t.Errorf("WithGitHubOptions() gitHubSearchOptions: mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
 func Test_NewSearcher(t *testing.T) {
 	type input struct {
 		c *github.Client
