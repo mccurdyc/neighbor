@@ -120,7 +120,7 @@ func main() {
 	numDesiredResults := 100 // TODO: read the number of desired results from a config value
 	repositories, err := github.Search(ctx.Context, searcher, ctx.GitHub.Query, github.SearchOptions().WithNumberOfResults(numDesiredResults))
 	if err != nil {
-		glog.Exitf("error searching GitHub: %+v", err)
+		glog.V(2).Infof("error searching GitHub: %+v", err)
 	}
 
 	fmt.Printf("results: %+v", repositories)
