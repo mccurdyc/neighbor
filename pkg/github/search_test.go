@@ -339,11 +339,11 @@ func Test_Search(t *testing.T) {
 				s: &mockSearcher{
 					res: Results{
 						Repositories: []*github.Repository{
-							&github.Repository{ID: ptrToInt(1)},
-							&github.Repository{ID: ptrToInt(2)},
-							&github.Repository{ID: ptrToInt(3)},
-							&github.Repository{ID: ptrToInt(4)},
-							&github.Repository{ID: ptrToInt(5)},
+							&github.Repository{ID: ptrToInt64(1)},
+							&github.Repository{ID: ptrToInt64(2)},
+							&github.Repository{ID: ptrToInt64(3)},
+							&github.Repository{ID: ptrToInt64(4)},
+							&github.Repository{ID: ptrToInt64(5)},
 						},
 					},
 					err: nil,
@@ -353,9 +353,9 @@ func Test_Search(t *testing.T) {
 			},
 			want: want{
 				res: []*github.Repository{
-					&github.Repository{ID: ptrToInt(1)},
-					&github.Repository{ID: ptrToInt(2)},
-					&github.Repository{ID: ptrToInt(3)},
+					&github.Repository{ID: ptrToInt64(1)},
+					&github.Repository{ID: ptrToInt64(2)},
+					&github.Repository{ID: ptrToInt64(3)},
 				},
 				err: nil,
 			},
@@ -366,9 +366,9 @@ func Test_Search(t *testing.T) {
 				s: &mockSearcher{
 					res: Results{
 						Repositories: []*github.Repository{
-							&github.Repository{ID: ptrToInt(1)},
-							&github.Repository{ID: ptrToInt(2)},
-							&github.Repository{ID: ptrToInt(3)},
+							&github.Repository{ID: ptrToInt64(1)},
+							&github.Repository{ID: ptrToInt64(2)},
+							&github.Repository{ID: ptrToInt64(3)},
 						},
 						response: &github.Response{NextPage: 1},
 					},
@@ -379,11 +379,11 @@ func Test_Search(t *testing.T) {
 			},
 			want: want{
 				res: []*github.Repository{
-					&github.Repository{ID: ptrToInt(1)},
-					&github.Repository{ID: ptrToInt(2)},
-					&github.Repository{ID: ptrToInt(3)},
-					&github.Repository{ID: ptrToInt(1)},
-					&github.Repository{ID: ptrToInt(2)},
+					&github.Repository{ID: ptrToInt64(1)},
+					&github.Repository{ID: ptrToInt64(2)},
+					&github.Repository{ID: ptrToInt64(3)},
+					&github.Repository{ID: ptrToInt64(1)},
+					&github.Repository{ID: ptrToInt64(2)},
 				},
 				err: nil,
 			},
@@ -394,8 +394,8 @@ func Test_Search(t *testing.T) {
 				s: &mockSearcher{
 					res: Results{
 						Repositories: []*github.Repository{
-							&github.Repository{ID: ptrToInt(1)},
-							&github.Repository{ID: ptrToInt(2)},
+							&github.Repository{ID: ptrToInt64(1)},
+							&github.Repository{ID: ptrToInt64(2)},
 						},
 						response: &github.Response{NextPage: 1},
 					},
@@ -406,11 +406,11 @@ func Test_Search(t *testing.T) {
 			},
 			want: want{
 				res: []*github.Repository{
-					&github.Repository{ID: ptrToInt(1)},
-					&github.Repository{ID: ptrToInt(2)},
-					&github.Repository{ID: ptrToInt(1)},
-					&github.Repository{ID: ptrToInt(2)},
-					&github.Repository{ID: ptrToInt(1)},
+					&github.Repository{ID: ptrToInt64(1)},
+					&github.Repository{ID: ptrToInt64(2)},
+					&github.Repository{ID: ptrToInt64(1)},
+					&github.Repository{ID: ptrToInt64(2)},
+					&github.Repository{ID: ptrToInt64(1)},
 				},
 				err: nil,
 			},
@@ -421,8 +421,8 @@ func Test_Search(t *testing.T) {
 				s: &mockSearcher{
 					res: Results{
 						Repositories: []*github.Repository{
-							&github.Repository{ID: ptrToInt(1)},
-							&github.Repository{ID: ptrToInt(2)},
+							&github.Repository{ID: ptrToInt64(1)},
+							&github.Repository{ID: ptrToInt64(2)},
 						},
 						response: &github.Response{NextPage: 1},
 					},
