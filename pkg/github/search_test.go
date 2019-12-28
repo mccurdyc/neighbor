@@ -11,6 +11,18 @@ import (
 	"github.com/google/go-github/github"
 )
 
+func ptrToInt(i int) *int {
+	return &i
+}
+
+func ptrToInt64(i int64) *int64 {
+	return &i
+}
+
+func ptrToBool(b bool) *bool {
+	return &b
+}
+
 func Test_SearchOptions(t *testing.T) {
 	want := searchOptions{
 		numDesiredResults:   maxPageSize,
@@ -289,10 +301,6 @@ func (m *mockSearcher) search(_ context.Context, _ string, _ *github.SearchOptio
 
 func (m *mockSearcher) processResults(_ interface{}, _ *github.Response) Results {
 	return m.res
-}
-
-func ptrToInt(i int64) *int64 {
-	return &i
 }
 
 func Test_Search(t *testing.T) {
