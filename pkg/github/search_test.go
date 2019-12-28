@@ -11,6 +11,21 @@ import (
 	"github.com/google/go-github/github"
 )
 
+func Test_SearchOptions(t *testing.T) {
+	want := searchOptions{
+		numDesiredResults:   maxPageSize,
+		maxPageSize:         maxPageSize,
+		gitHubSearchOptions: github.SearchOptions{},
+	}
+
+	got := SearchOptions()
+	eq := reflect.DeepEqual(want, got)
+
+	if !eq {
+		t.Errorf("SearchOptions() mismatch \n\tgot: %+v\n\twant: %+v", got, want)
+	}
+}
+
 func Test_NewSearcher(t *testing.T) {
 	type input struct {
 		c *github.Client
@@ -223,6 +238,27 @@ func Test_Search(t *testing.T) {
 					&github.Repository{ID: ptrToInt(1)},
 				},
 				err: nil,
+			},
+		},
+
+		"search_returns_error": {
+			input: input{
+				s: &mockSearcher{
+					res: Results{
+						Repositories: []*github.Repository{
+							&github.Repository{ID: ptrToInt(1)},
+							&github.Repository{ID: ptrToInt(2)},
+						},
+						response: &github.Response{NextPage: 1},
+					},
+					err: errors.New("search error"),
+				},
+				query: "",
+				opts:  searchOptions{numDesiredResults: 5, maxPageSize: 2},
+			},
+			want: want{
+				res: []*github.Repository{},
+				err: errors.New("search error"),
 			},
 		},
 	}
