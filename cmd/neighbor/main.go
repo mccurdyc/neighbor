@@ -1,7 +1,6 @@
 package main
 
 import (
-	// stdlib
 	"context"
 	"flag"
 	"fmt"
@@ -9,16 +8,15 @@ import (
 	"os/signal"
 	"syscall"
 
-	// external
 	"github.com/golang/glog"
+	"gopkg.in/src-d/go-git.v4"
 	"github.com/pkg/errors"
 
-	// internal
-	"github.com/mccurdyc/neighbor/pkg/config"
 	"github.com/mccurdyc/neighbor/pkg/external"
 	"github.com/mccurdyc/neighbor/pkg/github"
-	"github.com/mccurdyc/neighbor/pkg/neighbor"
 )
+
+const projectDir = "_external_project"
 
 func main() {
 	fp := flag.String("file", "", "Absolute filepath to the config file.")
@@ -37,28 +35,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// #TODO - would be nice to be able to override
-	wd, err := os.Getwd()
-	if err != nil {
-		glog.Exitf("error getting current directory: %+v", err)
-	}
-
-	c, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	// create a context object that will be used for the life of the program and passed around
-	ctx := &neighbor.Ctx{
-		Context: c,
-		GitHub: neighbor.GitHubDetails{
-			// by default, use the cli args
-			// if the config file is specified, these will be overwritten
-			AccessToken: *tkn,
-			SearchType:  *searchType,
-			Query:       *query,
-		},
-		NeighborDir:  wd,
-		ExtResultDir: fmt.Sprintf("%s/%s", wd, "_external-projects-wd"), // go tools handle directories prepended with '_' differently; often they ignore those directories
-	}
+	ctx, cancel := context.WithCancel(context.Background())
 
 	// listen for signals such as SIGINT (^C, CONTROL-C)
 	go func() {
@@ -74,73 +51,50 @@ func main() {
 		}
 	}()
 
-	cmd := *externalCmd
+	// if len(*fp) != 0 {
+	// 	cfg := config.New(*fp)
+	// 	cfg.Parse()
+	//
+	// 	ctx.Config = cfg
+	// 	ctx.GitHub = neighbor.GitHubDetails{
+	// 		AccessToken: cfg.Contents.AccessToken,
+	// 		SearchType:  cfg.Contents.SearchType,
+	// 		Query:       cfg.Contents.Query,
+	// 	}
+	//
+	// 	cmd = cfg.Contents.ExternalCmdStr
+	// }
 
-	if len(*fp) != 0 {
-		cfg := config.New(*fp)
-		cfg.Parse()
-
-		ctx.Config = cfg
-		ctx.GitHub = neighbor.GitHubDetails{
-			AccessToken: cfg.Contents.AccessToken,
-			SearchType:  cfg.Contents.SearchType,
-			Query:       cfg.Contents.Query,
-		}
-
-		cmd = cfg.Contents.ExternalCmdStr
-	}
-
-	ctx.SetExternalCmd(cmd)
-
-	glog.V(2).Infof("external command to be run on each project: %s\n", ctx.ExternalCmd)
-
-	if err = ctx.Validate(); err != nil {
-		glog.Exit(errors.Wrap(err, "error validating context"))
-	}
-
-	err = os.Mkdir(ctx.ExtResultDir, os.ModePerm)
+	err := os.Mkdir(projectDir, os.ModePerm)
 	if err != nil {
-		glog.Exitf("error creating collated directory: %+v", err)
+		glog.Exitf("failed to create collated project directory: %+v", err)
 	}
 
-	if *clean {
-		defer func() {
-			err := os.RemoveAll(ctx.ExtResultDir)
-			if err != nil {
-				glog.Exitf("error removing collated directory: %+v", err)
-			}
-		}()
-	}
-
-	searcher, err := github.NewSearcher(github.Connect(ctx.Context, ctx.GitHub.AccessToken), github.SearchType(ctx.GitHub.SearchType))
+	searcher, err := github.NewSearcher(github.Connect(ctx, *tkn), github.SearchType(*searchType))
 	if err != nil {
 		glog.Exitf("error creating searcher: %+v", err)
 	}
 
 	numDesiredResults := 100 // TODO: read the number of desired results from a config value
-	repositories, err := github.Search(ctx.Context, searcher, ctx.GitHub.Query, github.SearchOptions().WithNumberOfResults(numDesiredResults))
+	repositories, err := github.Search(ctx, searcher, *query, github.SearchOptions().WithNumberOfResults(numDesiredResults))
 	if err != nil {
 		glog.V(2).Infof("error searching GitHub: %+v", err)
 	}
 
-	clonedReposCh := github.CloneRepositories(ctx, repositories)
-	subjectedReposCh := external.Run(ctx, clonedReposCh)
+	for _, repo := range repositories {
+		err := github.Clone(ctx, projectDir, *repo, git.CloneOptions{})
+		if err != nil {
+			glog.V(2).Infof("failed to clone repository (%s): %+v", repo.GetName, err)
+		}
 
-	f := func(r github.ExternalProject) {
-		glog.V(2).Infof("finished running external command on %s", r.Name)
+		out, err := external.Run(ctx, *externalCmd, projectDir)
 	}
 
 	if *clean {
-		f = func(r github.ExternalProject) {
-			err := os.RemoveAll(r.Directory)
-			if err != nil {
-				glog.Errorf("error removing directory: %s", r.Directory)
-			}
+		err := os.RemoveAll(projectDir)
+		if err != nil {
+			glog.Errorf("error removing directory: %s", r.Directory)
 		}
-	}
-
-	for r := range subjectedReposCh {
-		f(r)
 	}
 }
 
