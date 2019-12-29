@@ -12,7 +12,6 @@ import (
 	"syscall"
 
 	"github.com/golang/glog"
-	"gopkg.in/src-d/go-git.v4"
 
 	"github.com/mccurdyc/neighbor/pkg/github"
 	"github.com/mccurdyc/neighbor/pkg/runner"
@@ -67,7 +66,12 @@ func main() {
 	// 	cmd = cfg.Contents.ExternalCmdStr
 	// }
 
-	err := os.Mkdir(projectDir, os.ModePerm)
+	workingDir, err := os.Getwd()
+	if err != nil {
+		glog.Exitf("failed to get working directory: %+v", err)
+	}
+
+	err = os.Mkdir(projectDir, os.ModePerm)
 	if err != nil {
 		glog.Exitf("failed to create collated project directory: %+v", err)
 	}
@@ -80,19 +84,24 @@ func main() {
 	numDesiredResults := 100 // TODO: read the number of desired results from a config value
 	repositories, err := github.Search(ctx, searcher, *query, github.SearchOptions().WithNumberOfResults(numDesiredResults))
 	if err != nil {
-		glog.V(2).Infof("error searching GitHub: %+v", err)
+		glog.Errorf("error searching GitHub: %+v", err)
 	}
 
 	for _, repo := range repositories {
-		err := github.Clone(ctx, projectDir, *repo, git.CloneOptions{})
+		repo := repo
+
+		cfg := github.NewCloneConfig(repo)
+		dir := filepath.Join(workingDir, projectDir, repo.GetName())
+
+		err := github.Clone(ctx, dir, *repo, cfg)
 		if err != nil {
-			glog.V(2).Infof("failed to clone repository (%s): %+v", repo.GetName(), err)
+			glog.Errorf("failed to clone repository (%s): %+v", repo.GetName(), err)
+			continue
 		}
 
-		dir := filepath.Join(projectDir, repo.GetName())
 		err = runBinary(dir, *externalCmd)
 		if err != nil {
-			glog.Errorf("failed to run binary command on %s: %w", repo.GetName(), err)
+			glog.Errorf("failed to run binary command on '%s': %+v", repo.GetName(), err)
 		}
 	}
 
