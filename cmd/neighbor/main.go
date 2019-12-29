@@ -6,7 +6,10 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/signal"
+	"path/filepath"
+	"strings"
 	"syscall"
 
 	// external
@@ -15,9 +18,9 @@ import (
 
 	// internal
 	"github.com/mccurdyc/neighbor/pkg/config"
-	"github.com/mccurdyc/neighbor/pkg/external"
 	"github.com/mccurdyc/neighbor/pkg/github"
 	"github.com/mccurdyc/neighbor/pkg/neighbor"
+	"github.com/mccurdyc/neighbor/pkg/runner"
 )
 
 func main() {
@@ -124,24 +127,28 @@ func main() {
 	}
 
 	clonedReposCh := github.CloneRepositories(ctx, repositories)
-	subjectedReposCh := external.Run(ctx, clonedReposCh)
+	for repo := range clonedReposCh {
+		dir := filepath.Join(ctx.ExtResultDir, repo.Name)
 
-	f := func(r github.ExternalProject) {
-		glog.V(2).Infof("finished running external command on %s", r.Name)
-	}
-
-	if *clean {
-		f = func(r github.ExternalProject) {
-			err := os.RemoveAll(r.Directory)
-			if err != nil {
-				glog.Errorf("error removing directory: %s", r.Directory)
-			}
+		err := runBinary(dir, *externalCmd)
+		if err != nil {
+			glog.Errorf("failed to run binary command on %s: %w", repo.Name, err)
 		}
 	}
+}
 
-	for r := range subjectedReposCh {
-		f(r)
+func runBinary(dir string, command string) error {
+	xc := strings.Split(command, " ")
+
+	cmd := exec.Command(xc[0])
+	if len(xc) > 1 {
+		cmd = exec.Command(xc[0], xc[1:]...)
 	}
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return runner.RunInDir(dir, cmd)
 }
 
 // usage prints the usage and the supported flags.
