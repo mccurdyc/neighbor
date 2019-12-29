@@ -5,15 +5,17 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/signal"
+	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/golang/glog"
 	"gopkg.in/src-d/go-git.v4"
-	"github.com/pkg/errors"
 
-	"github.com/mccurdyc/neighbor/pkg/external"
 	"github.com/mccurdyc/neighbor/pkg/github"
+	"github.com/mccurdyc/neighbor/pkg/runner"
 )
 
 const projectDir = "_external_project"
@@ -84,18 +86,36 @@ func main() {
 	for _, repo := range repositories {
 		err := github.Clone(ctx, projectDir, *repo, git.CloneOptions{})
 		if err != nil {
-			glog.V(2).Infof("failed to clone repository (%s): %+v", repo.GetName, err)
+			glog.V(2).Infof("failed to clone repository (%s): %+v", repo.GetName(), err)
 		}
 
-		out, err := external.Run(ctx, *externalCmd, projectDir)
+		dir := filepath.Join(projectDir, repo.GetName())
+		err = runBinary(dir, *externalCmd)
+		if err != nil {
+			glog.Errorf("failed to run binary command on %s: %w", repo.GetName(), err)
+		}
 	}
 
 	if *clean {
 		err := os.RemoveAll(projectDir)
 		if err != nil {
-			glog.Errorf("error removing directory: %s", r.Directory)
+			glog.Errorf("error cleaning up: %w", err)
 		}
 	}
+}
+
+func runBinary(dir string, command string) error {
+	xc := strings.Split(command, " ")
+
+	cmd := exec.Command(xc[0])
+	if len(xc) > 1 {
+		cmd = exec.Command(xc[0], xc[1:]...)
+	}
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return runner.RunInDir(dir, cmd)
 }
 
 // usage prints the usage and the supported flags.
