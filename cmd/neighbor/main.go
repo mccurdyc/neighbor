@@ -18,9 +18,9 @@ import (
 
 	// internal
 	"github.com/mccurdyc/neighbor/pkg/config"
-	"github.com/mccurdyc/neighbor/pkg/external"
 	"github.com/mccurdyc/neighbor/pkg/github"
 	"github.com/mccurdyc/neighbor/pkg/neighbor"
+	"github.com/mccurdyc/neighbor/pkg/runner"
 )
 
 func main() {
@@ -148,7 +148,7 @@ func runBinary(dir string, command string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	return external.Run(context.Background(), dir, cmd)
+	return runner.RunInDir(dir, cmd)
 }
 
 // usage prints the usage and the supported flags.
