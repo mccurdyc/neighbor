@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/golang/glog"
@@ -87,21 +88,27 @@ func main() {
 		glog.Errorf("error searching GitHub: %+v", err)
 	}
 
-	for _, repo := range repositories {
-		repo := repo
+	dir := filepath.Join(workingDir, projectDir)
 
-		cfg := github.NewCloneConfig(repo)
-		dir := filepath.Join(workingDir, projectDir, repo.GetName())
+	errCh := make(chan github.ErrorWithMeta, len(repositories))
+	var wg sync.WaitGroup
+	wg.Add(1)
 
-		err := github.Clone(ctx, dir, *repo, cfg)
-		if err != nil {
-			glog.Errorf("failed to clone repository (%s): %+v", repo.GetName(), err)
-			continue
+	go func() {
+		for err := range errCh {
+			glog.Errorf("error cloning repository: %+v", err)
 		}
+		wg.Wait()
+	}()
+
+	github.CloneRepositories(ctx, dir, repositories, errCh, github.CloneConfig{})
+
+	for _, repo := range repositories {
+		dir := filepath.Join(workingDir, projectDir, repo.GetFullName())
 
 		err = runBinary(dir, *externalCmd)
 		if err != nil {
-			glog.Errorf("failed to run binary command on '%s': %+v", repo.GetName(), err)
+			glog.Errorf("failed to run binary command on '%s': %+v", repo.GetFullName(), err)
 		}
 	}
 
