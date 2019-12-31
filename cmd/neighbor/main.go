@@ -14,6 +14,7 @@ import (
 
 	"github.com/golang/glog"
 
+	"github.com/mccurdyc/neighbor/pkg/config"
 	"github.com/mccurdyc/neighbor/pkg/github"
 	"github.com/mccurdyc/neighbor/pkg/runner"
 )
@@ -53,19 +54,16 @@ func main() {
 		}
 	}()
 
-	// if len(*fp) != 0 {
-	// 	cfg := config.New(*fp)
-	// 	cfg.Parse()
-	//
-	// 	ctx.Config = cfg
-	// 	ctx.GitHub = neighbor.GitHubDetails{
-	// 		AccessToken: cfg.Contents.AccessToken,
-	// 		SearchType:  cfg.Contents.SearchType,
-	// 		Query:       cfg.Contents.Query,
-	// 	}
-	//
-	// 	cmd = cfg.Contents.ExternalCmdStr
-	// }
+	cfg := config.New(*fp)
+
+	if len(*fp) != 0 {
+		cfg.Parse()
+
+		tkn = &cfg.Contents.AccessToken
+		searchType = &cfg.Contents.SearchType
+		query = &cfg.Contents.Query
+		externalCmd = &cfg.Contents.ExternalCmdStr
+	}
 
 	workingDir, err := os.Getwd()
 	if err != nil {
