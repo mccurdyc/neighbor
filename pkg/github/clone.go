@@ -1,121 +1,144 @@
 package github
 
 import (
-	// stdlib
-
+	"context"
 	"fmt"
-	"os"
+	"path/filepath"
 	"sync"
 
-	// external
-	"github.com/golang/glog"
 	"github.com/google/go-github/github"
 	git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport/http"
-
-	// internal
-	"github.com/mccurdyc/neighbor/pkg/neighbor"
 )
 
-// ClonedRepositoriesCtxKey is used to set a context key as it complains when you use a built-in
-// type. This is what is suggested by bradfitz on GitHub https://github.com/golang/go/issues/17826#issuecomment-258946985.
-// Error Message: "should not use basic type string as key in context.WithValue"
-type ClonedRepositoriesCtxKey struct{}
+const numWorkers = 5
 
-// repoDirMap will store repository names as the key where the value will be the
-// path to where the repository was cloned.
-type repoDirMap map[string]string
-
-// ExternalProject contains a GitHub project's name as where it was cloned to
-type ExternalProject struct {
-	Name      string
-	Directory string
+// Cloner is the interface required to clone a repository.
+type Cloner interface {
+	Clone(context.Context, string, CloneConfig) error
 }
 
-// CloneRepositories creates temporary directories where the base path is that of os.TempDir
-// and the rest of the path is the Name of the repository. After creating a temporary
-// directory, a project is cloned into that directory. After creating temp directories
-// and cloning projects into the respective directory, the context is updated
-// with the project names and the temporary directories.
-func CloneRepositories(ctx *neighbor.Ctx, repositories []*github.Repository) <-chan ExternalProject {
-	ch := make(chan ExternalProject) // an unbuffered, synchronous channel for guaranteed delivery
+// CloneConfig is used to configure cloning.
+type CloneConfig struct {
+	url  string
+	auth transport.AuthMethod
+}
+
+// NewCloneConfig creates a new, empty, CloneConfig.
+func NewCloneConfig() CloneConfig {
+	return CloneConfig{}
+}
+
+// WithRepoURL returns a new CloneConfig with the url field set to the repository's
+// CloneURL.
+func (cf CloneConfig) WithRepoURL(repo *github.Repository) CloneConfig {
+	cf.url = repo.GetCloneURL()
+	return cf
+}
+
+// WithTokenAuth is http.BasicAuth configured so that an API token can be used
+// instead of a username and password. This is how GitHub handles token authentication
+// https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line#using-a-token-on-the-command-line
+func (cf CloneConfig) WithTokenAuth(token string) CloneConfig {
+	cf.auth = &http.BasicAuth{
+		Username: "null",
+		Password: token,
+	}
+	return cf
+}
+
+// WithBasicAuth is authentication via username and password.
+func (cf CloneConfig) WithBasicAuth(username, password string) CloneConfig {
+	cf.auth = &http.BasicAuth{
+		Username: username,
+		Password: password,
+	}
+	return cf
+}
+
+// WithAuth sets the auth method to an arbitrary auth method that satisfies the
+// transport.AuthMethod interface, specified by the consumer.
+func (cf CloneConfig) WithAuth(auth transport.AuthMethod) CloneConfig {
+	cf.auth = auth
+	return cf
+}
+
+// ErrorWithMeta contains the error, or nil, incurred while cloning the repository
+// with additional metadata about the cloned repository.
+type ErrorWithMeta struct {
+	Error error
+
+	Meta
+}
+
+// Meta contains information about the cloned repository.
+type Meta struct {
+	// RepositoryName is the full repository name i.e., 'username/reponame'.
+	RepositoryName string
+	// ClonedDir is the filepath to the cloned repository.
+	ClonedDir string
+}
+
+// CloneRepositories clones repositories as quickly as possible as subdirectories
+// where the subdirectory name is the repository name, with the parent directory
+// specified by dir. CloneRepositories guarantees that the repositories will be
+// cloned as long as an error is not incurred. Errors incurred cloning a repository
+// will not prevent attempts at cloning additional repositories. doneCh will
+// be populated with the error value, or nil otherwise for each repository.
+func CloneRepositories(ctx context.Context, dir string, repos []*github.Repository, cloner Cloner, cfg CloneConfig) chan ErrorWithMeta {
+	ch := make(chan github.Repository)
+	doneCh := make(chan ErrorWithMeta)
 
 	var wg sync.WaitGroup
-
-	wg.Add(len(repositories))
-
-	for _, r := range repositories {
-		go func(repo github.Repository) {
-			select {
-			case <-ctx.Context.Done():
-				wg.Done()
-				return
-			default:
-				cloneRepo(ctx, repo, ch)
-				wg.Done()
-			}
-		}(*r)
-	}
+	wg.Add(numWorkers)
 
 	go func() {
-		wg.Wait()
-		// after we are finished cloning the repos and sending them through the pipeline,
-		// send a signal informing the consumers that we are done sending.
+		for _, repo := range repos {
+			ch <- *repo
+		}
+
 		close(ch)
+		// wait until all workers are done before closing the doneCh to avoid
+		// panic due to sends on a closed channel.
+		wg.Wait()
+		close(doneCh)
 	}()
 
-	return ch
+	// start workers
+	for w := 0; w < numWorkers; w++ {
+		go func() {
+			defer wg.Done()
+
+			for repo := range ch {
+				cfg.url = repo.GetCloneURL()
+				dir := filepath.Join(dir, repo.GetFullName())
+
+				err := cloner.Clone(ctx, dir, cfg)
+				doneCh <- ErrorWithMeta{Error: err, Meta: Meta{RepositoryName: repo.GetFullName(), ClonedDir: dir}}
+			}
+		}()
+	}
+
+	return doneCh
 }
 
-// getCloneURL returns a GitHub git clone URL e.g., https://github.com/mccurdyc/neighbor.git
-func getCloneURL(repo github.Repository) string {
-	url := repo.GetCloneURL()
-	if url == "" {
-		url = fmt.Sprintf("%s.git", repo.GetHTMLURL())
-	}
-	return url
-}
+type PlainCloner struct{}
 
-// cloneRepo clones a repository using a GitHub personal access token, given a
-// github.Repository to an out directory specified by ctx.ExternalResultDir/repository_name
-// and informs downstream consumers of the project name and where it is located
-// on the machine.
-func cloneRepo(ctx *neighbor.Ctx, repo github.Repository, ch chan<- ExternalProject) {
-	glog.V(3).Infof("%+v", repo)
-
-	dir := fmt.Sprintf("%s/%s", ctx.ExtResultDir, *repo.Name)
-	glog.V(2).Infof("created directory: %s", dir)
-
-	opts := &git.CloneOptions{
-		URL:      getCloneURL(repo),
-		Progress: os.Stderr, // Stderr so that it can be surpressed without interfering with external command output
+func (pc *PlainCloner) Clone(ctx context.Context, dir string, cfg CloneConfig) error {
+	opts := git.CloneOptions{
+		URL: cfg.url,
 	}
 
-	if len(ctx.GitHub.AccessToken) > 0 {
-		// you must use BasicAuth with your GitHub Access Token as the password
-		// and the Username can be anything.
-		opts.Auth = &http.BasicAuth{
-			Username: "abc123", // yes, this can be anything except an empty string
-			Password: ctx.GitHub.AccessToken,
-		}
+	if cfg.auth != nil {
+		opts.Auth = cfg.auth
 	}
 
-	_, err := git.PlainClone(dir, false, opts)
+	err := opts.Validate()
 	if err != nil {
-		glog.Errorf("failed to clone project %s with error: %+v", *repo.Name, err)
-		return
+		return fmt.Errorf("CloneOptions are invalid: %w", err)
 	}
 
-	glog.V(2).Infof("cloned: %s", repo.GetCloneURL())
-
-	// this should block until there is a receiver
-	select {
-	case <-ctx.Context.Done():
-		return
-	default:
-		ch <- ExternalProject{
-			Name:      *repo.Name,
-			Directory: dir,
-		}
-	}
+	_, err = git.PlainClone(dir, false, &opts)
+	return err
 }
