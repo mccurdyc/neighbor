@@ -23,6 +23,10 @@ func ptrToBool(b bool) *bool {
 	return &b
 }
 
+func ptrToString(s string) *string {
+	return &s
+}
+
 func Test_SearchOptions(t *testing.T) {
 	want := searchOptions{
 		numDesiredResults:   maxPageSize,
