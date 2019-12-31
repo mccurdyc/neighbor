@@ -86,7 +86,7 @@ func main() {
 	}
 
 	dir := filepath.Join(workingDir, projectDir)
-	doneCh := github.CloneRepositories(ctx, dir, repositories, github.BasicCloner, github.NewCloneConfig().WithTokenAuth(*tkn))
+	doneCh := github.CloneRepositories(ctx, dir, repositories, &github.PlainCloner{}, github.NewCloneConfig().WithTokenAuth(*tkn))
 
 	for info := range doneCh {
 		if info.Error != nil {

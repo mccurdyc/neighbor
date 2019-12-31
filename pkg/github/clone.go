@@ -123,9 +123,9 @@ func CloneRepositories(ctx context.Context, dir string, repos []*github.Reposito
 	return doneCh
 }
 
-// Clone clones a project to the directory specified by dir with the project directory
-// name being the 'username/repository'. Note that repository is not a sub-directory.
-func Clone(ctx context.Context, dir string, repo github.Repository, cfg CloneConfig) error {
+type PlainCloner struct{}
+
+func (pc *PlainCloner) Clone(ctx context.Context, dir string, cfg CloneConfig) error {
 	opts := git.CloneOptions{
 		URL: cfg.url,
 	}
@@ -140,8 +140,5 @@ func Clone(ctx context.Context, dir string, repo github.Repository, cfg CloneCon
 	}
 
 	_, err = git.PlainClone(dir, false, &opts)
-	if err != nil {
-		return fmt.Errorf("failed to clone '%s' to '%s/': %w", repo.GetFullName(), dir, err)
-	}
-	return nil
+	return err
 }
