@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
-	"sync"
 	"syscall"
 
 	"github.com/golang/glog"
@@ -86,33 +85,22 @@ func main() {
 		glog.Errorf("error searching GitHub: %+v", err)
 	}
 
-	doneCh := make(chan github.ErrorWithMeta, len(repositories))
-	var wg sync.WaitGroup
-	wg.Add(1)
+	dir := filepath.Join(workingDir, projectDir)
+	doneCh := github.CloneRepositories(ctx, dir, repositories, github.BasicCloner, github.NewCloneConfig().WithTokenAuth(*tkn))
 
-	go func() {
-		for info := range doneCh {
-			if info.Error != nil {
-				glog.Errorf("error cloning repository: %+v", err)
-				continue
-			}
-
-			// Right now, commands are sequentially run. The only part that is done concurrently
-			// is cloning.
-			err = runBinary(info.Meta.ClonedDir, *externalCmd)
-			if err != nil {
-				glog.Errorf("failed to run binary command in '%s': %+v", info.Meta.ClonedDir, err)
-			}
+	for info := range doneCh {
+		if info.Error != nil {
+			glog.Errorf("error cloning repository: %+v", info.Error)
+			continue
 		}
 
-		wg.Done()
-	}()
-
-	dir := filepath.Join(workingDir, projectDir)
-
-	github.CloneRepositories(ctx, dir, repositories, doneCh, github.NewCloneConfig().WithTokenAuth(*tkn))
-
-	wg.Wait()
+		// Right now, commands are sequentially run. The only part that is done concurrently
+		// is cloning.
+		err = runBinary(info.Meta.ClonedDir, *externalCmd)
+		if err != nil {
+			glog.Errorf("failed to run binary command in '%s': %+v", info.Meta.ClonedDir, err)
+		}
+	}
 
 	if *clean {
 		err := os.RemoveAll(projectDir)

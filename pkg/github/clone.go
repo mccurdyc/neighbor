@@ -16,7 +16,7 @@ const numWorkers = 5
 
 // Cloner is the interface required to clone a repository.
 type Cloner interface {
-	Clone(context.Context, string, github.Repository)
+	Clone(context.Context, string, CloneConfig) error
 }
 
 // CloneConfig is used to configure cloning.
@@ -86,50 +86,46 @@ type Meta struct {
 // cloned as long as an error is not incurred. Errors incurred cloning a repository
 // will not prevent attempts at cloning additional repositories. doneCh will
 // be populated with the error value, or nil otherwise for each repository.
-func CloneRepositories(ctx context.Context, dir string, repos []*github.Repository, doneCh chan ErrorWithMeta, cfg CloneConfig) {
+func CloneRepositories(ctx context.Context, dir string, repos []*github.Repository, cloner Cloner, cfg CloneConfig) chan ErrorWithMeta {
 	ch := make(chan github.Repository)
+	doneCh := make(chan ErrorWithMeta)
 
 	var wg sync.WaitGroup
 	wg.Add(numWorkers)
 
+	go func() {
+		for _, repo := range repos {
+			ch <- *repo
+		}
+
+		close(ch)
+		// wait until all workers are done before closing the doneCh to avoid
+		// panic due to sends on a closed channel.
+		wg.Wait()
+		close(doneCh)
+	}()
+
+	// start workers
 	for w := 0; w < numWorkers; w++ {
 		go func() {
 			defer wg.Done()
 
-			cloneRepositories(ctx, dir, ch, doneCh, cfg)
+			for repo := range ch {
+				cfg.url = repo.GetCloneURL()
+				dir := filepath.Join(dir, repo.GetFullName())
+
+				err := cloner.Clone(ctx, dir, cfg)
+				doneCh <- ErrorWithMeta{Error: err, Meta: Meta{RepositoryName: repo.GetFullName(), ClonedDir: dir}}
+			}
 		}()
 	}
 
-	for _, repo := range repos {
-		ch <- *repo
-	}
-
-	close(ch)
-	wg.Wait()
-	close(doneCh)
-}
-
-func cloneRepositories(ctx context.Context, dir string, repoCh <-chan github.Repository, doneCh chan<- ErrorWithMeta, cfg CloneConfig) {
-	for repo := range repoCh {
-
-		cfg.url = repo.GetCloneURL()
-
-		dir := filepath.Join(dir, repo.GetFullName())
-
-		err := clone(ctx, dir, repo, cfg)
-		doneCh <- ErrorWithMeta{Error: err, Meta: Meta{RepositoryName: repo.GetFullName(), ClonedDir: dir}}
-	}
+	return doneCh
 }
 
 // Clone clones a project to the directory specified by dir with the project directory
 // name being the 'username/repository'. Note that repository is not a sub-directory.
 func Clone(ctx context.Context, dir string, repo github.Repository, cfg CloneConfig) error {
-	return clone(ctx, dir, repo, cfg)
-}
-
-// clone clones a project to the directory specified by dir with the project directory
-// name being the 'username/repository'. Note that repository is not a sub-directory.
-func clone(ctx context.Context, dir string, repo github.Repository, cfg CloneConfig) error {
 	opts := git.CloneOptions{
 		URL: cfg.url,
 	}
