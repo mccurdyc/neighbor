@@ -131,11 +131,11 @@ func Clone(ctx context.Context, dir string, repo github.Repository, cfg CloneCon
 // name being the 'username/repository'. Note that repository is not a sub-directory.
 func clone(ctx context.Context, dir string, repo github.Repository, cfg CloneConfig) error {
 	opts := git.CloneOptions{
-		URL: cfg.URL,
+		URL: cfg.url,
 	}
 
-	if cfg.Auth != nil {
-		opts.Auth = cfg.Auth
+	if cfg.auth != nil {
+		opts.Auth = cfg.auth
 	}
 
 	err := opts.Validate()
