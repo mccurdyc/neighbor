@@ -82,35 +82,39 @@ func main() {
 		glog.Exitf("error creating searcher: %+v", err)
 	}
 
-	numDesiredResults := 100 // TODO: read the number of desired results from a config value
+	numDesiredResults := 10 // TODO: read the number of desired results from a config value
 	repositories, err := github.Search(ctx, searcher, *query, github.SearchOptions().WithNumberOfResults(numDesiredResults))
 	if err != nil {
 		glog.Errorf("error searching GitHub: %+v", err)
 	}
 
-	dir := filepath.Join(workingDir, projectDir)
-
-	errCh := make(chan github.ErrorWithMeta, len(repositories))
+	doneCh := make(chan github.ErrorWithMeta, len(repositories))
 	var wg sync.WaitGroup
 	wg.Add(1)
 
 	go func() {
-		for err := range errCh {
-			glog.Errorf("error cloning repository: %+v", err)
+		for info := range doneCh {
+			if info.Error != nil {
+				glog.Errorf("error cloning repository: %+v", err)
+				continue
+			}
+
+			// Right now, commands are sequentially run. The only part that is done concurrently
+			// is cloning.
+			err = runBinary(info.Meta.ClonedDir, *externalCmd)
+			if err != nil {
+				glog.Errorf("failed to run binary command in '%s': %+v", info.Meta.ClonedDir, err)
+			}
 		}
-		wg.Wait()
+
+		wg.Done()
 	}()
 
-	github.CloneRepositories(ctx, dir, repositories, errCh, github.CloneConfig{})
+	dir := filepath.Join(workingDir, projectDir)
 
-	for _, repo := range repositories {
-		dir := filepath.Join(workingDir, projectDir, repo.GetFullName())
+	github.CloneRepositories(ctx, dir, repositories, doneCh, github.NewCloneConfig().WithTokenAuth(*tkn))
 
-		err = runBinary(dir, *externalCmd)
-		if err != nil {
-			glog.Errorf("failed to run binary command on '%s': %+v", repo.GetFullName(), err)
-		}
-	}
+	wg.Wait()
 
 	if *clean {
 		err := os.RemoveAll(projectDir)
