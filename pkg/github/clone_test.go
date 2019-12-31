@@ -162,6 +162,53 @@ func Test_WithBasicAuth(t *testing.T) {
 	}
 }
 
+func Test_WithAuth(t *testing.T) {
+	type input struct {
+		cf       CloneConfig
+		username string
+		password string
+	}
+
+	type want struct {
+		cf CloneConfig
+	}
+
+	var tests = map[string]struct {
+		input input
+		want  want
+	}{
+		"empty_config": {
+			input: input{
+				cf:       CloneConfig{},
+				username: "newusername",
+				password: "newpassword",
+			},
+			want: want{
+				cf: CloneConfig{auth: &http.BasicAuth{Username: "newusername", Password: "newpassword"}},
+			},
+		},
+
+		"overwrite_auth": {
+			input: input{
+				cf:       cloneCfgFixture,
+				username: "newusername",
+				password: "newpassword",
+			},
+			want: want{
+				cf: CloneConfig{url: "cloneurl", auth: &http.BasicAuth{Username: "newusername", Password: "newpassword"}},
+			},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := tt.input.cf.WithAuth(&http.BasicAuth{Username: tt.input.username, Password: tt.input.password})
+
+			compareCloneConfig(t, "WithAuth", got, tt.want.cf)
+		})
+	}
+}
+
 func compareCloneConfig(t *testing.T, fnName string, got, want CloneConfig) {
 	if diff := cmp.Diff(want.auth, got.auth, cmp.AllowUnexported()); diff != "" {
 		t.Errorf("%s() mismatch (-want +got):\n%s", fnName, diff)
