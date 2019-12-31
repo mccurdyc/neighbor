@@ -94,8 +94,9 @@ func CloneRepositories(ctx context.Context, dir string, repos []*github.Reposito
 
 	for w := 0; w < numWorkers; w++ {
 		go func() {
-			cloneRepositories(ctx, dir, ch, errCh, cfg)
-			wg.Done()
+			defer wg.Done()
+
+			cloneRepositories(ctx, dir, ch, doneCh, cfg)
 		}()
 	}
 
@@ -105,17 +106,18 @@ func CloneRepositories(ctx context.Context, dir string, repos []*github.Reposito
 
 	close(ch)
 	wg.Wait()
+	close(doneCh)
 }
 
-func cloneRepositories(ctx context.Context, dir string, repoCh <-chan github.Repository, errCh chan<- ErrorWithMeta, cfg CloneConfig) {
+func cloneRepositories(ctx context.Context, dir string, repoCh <-chan github.Repository, doneCh chan<- ErrorWithMeta, cfg CloneConfig) {
 	for repo := range repoCh {
 
-		cfg.URL = repo.GetCloneURL()
+		cfg.url = repo.GetCloneURL()
 
-		err := clone(ctx, filepath.Join(dir, repo.GetFullName()), repo, cfg)
-		if err != nil {
-			errCh <- ErrorWithMeta{Error: err, ErrorMeta: ErrorMeta{RepositoryName: repo.GetFullName()}}
-		}
+		dir := filepath.Join(dir, repo.GetFullName())
+
+		err := clone(ctx, dir, repo, cfg)
+		doneCh <- ErrorWithMeta{Error: err, Meta: Meta{RepositoryName: repo.GetFullName(), ClonedDir: dir}}
 	}
 }
 
