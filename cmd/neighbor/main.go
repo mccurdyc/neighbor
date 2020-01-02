@@ -13,9 +13,11 @@ import (
 
 	"github.com/golang/glog"
 
+	"github.com/mccurdyc/neighbor/builtin/retrieval/git"
 	"github.com/mccurdyc/neighbor/pkg/config"
 	"github.com/mccurdyc/neighbor/pkg/github"
 	"github.com/mccurdyc/neighbor/pkg/runner"
+	"github.com/mccurdyc/neighbor/sdk/retrieval"
 )
 
 const projectDir = "_external_project"
@@ -71,7 +73,7 @@ func main() {
 
 	err = os.Mkdir(projectDir, os.ModePerm)
 	if err != nil {
-		glog.Exitf("failed to create collated project directory: %+v", err)
+		glog.Exitf("failed to create project directory: %+v", err)
 	}
 
 	searcher, err := github.NewSearcher(github.Connect(ctx, *tkn), github.SearchType(*searchType))
@@ -85,27 +87,36 @@ func main() {
 		glog.Errorf("error searching GitHub: %+v", err)
 	}
 
-	dir := filepath.Join(workingDir, projectDir)
-	doneCh := github.CloneRepositories(ctx, dir, repositories, &github.PlainCloner{}, github.NewCloneConfig().WithTokenAuth(*tkn))
+	var conf = retrieval.BackendConfig{}
 
-	for info := range doneCh {
-		if info.Error != nil {
-			glog.Errorf("error cloning repository: %+v", info.Error)
+	if len(*tkn) != 0 {
+		conf.AuthMethod = "token"
+		conf.Config = map[string]string{"token": *tkn}
+	}
+
+	gitClone, err := git.Factory(ctx, &conf)
+	if err != nil {
+		glog.Exitf("error creating Git project retriever: %+v", err)
+	}
+
+	for _, repo := range repositories {
+		dir := filepath.Join(workingDir, projectDir, repo.GetFullName())
+		err := gitClone.Retrieve(ctx, repo.GetCloneURL(), dir)
+		if err != nil {
+			glog.Errorf("error retrieving project ('%s): %+v", repo.GetFullName(), err)
 			continue
 		}
 
-		// Right now, commands are sequentially run. The only part that is done concurrently
-		// is cloning.
-		err = runBinary(info.Meta.ClonedDir, *externalCmd)
+		err = runBinary(dir, *externalCmd)
 		if err != nil {
-			glog.Errorf("failed to run binary command in '%s': %+v", info.Meta.ClonedDir, err)
+			glog.Errorf("failed to run binary command in '%s': %+v", dir, err)
 		}
 	}
 
 	if *clean {
 		err := os.RemoveAll(projectDir)
 		if err != nil {
-			glog.Errorf("error cleaning up: %w", err)
+			glog.Errorf("error cleaning up: %+v", err)
 		}
 	}
 }
