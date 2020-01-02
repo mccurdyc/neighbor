@@ -20,7 +20,7 @@ func Factory(ctx context.Context, conf *retrieval.BackendConfig) (retrieval.Back
 	if strings.EqualFold(conf.AuthMethod, "basic") {
 		username := conf.Config["username"]
 		if len(username) == 0 {
-			return nil, fmt.Errorf("usernamer required for basic auth")
+			return nil, fmt.Errorf("username required for basic auth")
 		}
 
 		password := conf.Config["password"]
