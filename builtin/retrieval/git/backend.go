@@ -40,8 +40,9 @@ func Factory(ctx context.Context, conf *retrieval.BackendConfig) (retrieval.Back
 		if len(token) == 0 {
 			return nil, fmt.Errorf("token required for token auth")
 		}
-		auth = &http.TokenAuth{
-			Token: token,
+		auth = &http.BasicAuth{
+			Username: "null", // this can't be an empty string
+			Password: token,
 		}
 	}
 
