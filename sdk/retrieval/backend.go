@@ -9,11 +9,13 @@ type Backend interface {
 	Retrieve(context.Context, string, string) error
 }
 
+// BackendConfig contains the configuration parameters for a retrieval backend.
 type BackendConfig struct {
 	// AuthRequired is indicates the method, if one, to be used for authentication
 	// by the retrieval backend.
 	AuthMethod string
 
+	// Config is for optional or secondary configuration.
 	Config map[string]string
 }
 
