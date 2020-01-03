@@ -130,6 +130,8 @@ func Test_Factory(t *testing.T) {
 }
 
 func compareBackend(t *testing.T, want *Backend, got retrieval.Backend) {
+	t.Helper()
+
 	if got == nil {
 		if want != nil {
 			t.Errorf("Factory() mismatched nil")
@@ -148,4 +150,7 @@ func compareBackend(t *testing.T, want *Backend, got retrieval.Backend) {
 }
 
 func Test_Retrieval(t *testing.T) {
+	// TODO: this is more of an integration test and should be opt-in via a
+	// test flag and skipped by default.
+	t.Skip()
 }
