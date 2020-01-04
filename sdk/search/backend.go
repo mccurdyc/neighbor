@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/mccurdyc/neighbor/sdk/project"
 )
@@ -38,6 +39,9 @@ type BackendConfig struct {
 
 	// SearchMethod is the method of search to be used to find projects.
 	SearchMethod Method
+
+	// Client is the http client to be used to connect to the search service.
+	Client *http.Client
 
 	// Config is for optional or secondary configuration.
 	Config map[string]string
