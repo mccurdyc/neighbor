@@ -2,18 +2,9 @@ package github
 
 import (
 	"context"
-	"errors"
 
 	"github.com/google/go-github/github"
 )
-// ErrFewerResultsThanDesired is used to indicate that it was not possible to fulfill
-// the request from the user (i.e., could not find the number of results specified
-// by the user).
-//
-// This is important to specify because, for example, in research you might want
-// to guarantee that you are analyzing _exactly_ the number of projects specifed
-// or the search query may need to be tweaked.
-var ErrFewerResultsThanDesired = errors.New("contains fewer results than desired")
 
 func Search(ctx context.Context, s Searcher, query string, opts searchOptions) ([]*github.Repository, error) {
 	res := make([]*github.Repository, 0, opts.numDesiredResults)

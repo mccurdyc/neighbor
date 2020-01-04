@@ -23,6 +23,15 @@ const (
 	label       searchMethodEntity = "label"
 )
 
+// ErrFewerResultsThanDesired is used to indicate that it was not possible to fulfill
+// the request from the user (i.e., could not find the number of results specified
+// by the user).
+//
+// This is important to specify because, for example, in research you might want
+// to guarantee that you are analyzing _exactly_ the number of projects specifed
+// or the search query may need to be tweaked.
+var ErrFewerResultsThanDesired = fmt.Errorf("contains fewer results than desired")
+
 func Factory(ctx context.Context, conf *search.BackendConfig) (search.Backend, error) {
 	if len(conf.AuthMethod) == 0 {
 		// auth method required for GitHub code search - https://developer.github.com/v3/search/#search-code
@@ -94,15 +103,37 @@ type Backend struct {
 }
 
 func (b *Backend) Search(ctx context.Context, query string, numDesiredResults int) ([]project.Backend, error) {
-	// TODO handle pagination in here (i.e., calling the search helpers multiple times and collating results)
-	switch b.searchMethod {
-	case search.Project:
-		searchRepositories(ctx, b.githubClient, query, numDesiredResults)
-	case search.Code:
-		searchCode(ctx)
-	case search.Meta:
-		searchMeta(ctx, b.searchMethodEntity)
+	res := make([]project.Backend, 0, numDesiredResults)
+
+	for {
+		var (
+			searchRes []project.Backend
+			resp      *github.Response
+			err       error
+		)
+
+		switch b.searchMethod {
+		case search.Project:
+			searchRes, resp, err = searchRepositories(ctx, b.githubClient, query, numDesiredResults)
+		case search.Code:
+			searchRes, resp, err = searchCode(ctx)
+		case search.Meta:
+			searchRes, resp, err = searchMeta(ctx, b.searchMethodEntity)
+		}
+
+		res = append(res, searchRes...)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(res) >= numDesiredResults {
+			break
+		}
+
+		if resp.NextPage == 0 {
+			return res, ErrFewerResultsThanDesired
+		}
 	}
 
-	return nil, nil // TODO: fix
+	return res, nil
 }
