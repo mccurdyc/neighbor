@@ -18,10 +18,6 @@ func Factory(ctx context.Context, conf *project.BackendConfig) (project.Backend,
 		return nil, fmt.Errorf("source location cannot be empty")
 	}
 
-	if conf.RetrievalFunc == nil {
-		return nil, fmt.Errorf("retrieval function cannot be empty")
-	}
-
 	return &Backend{
 		name:           conf.Name,
 		version:        conf.Version,
