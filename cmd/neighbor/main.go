@@ -14,10 +14,11 @@ import (
 	"github.com/golang/glog"
 
 	"github.com/mccurdyc/neighbor/builtin/retrieval/git"
+	"github.com/mccurdyc/neighbor/builtin/search/github"
 	"github.com/mccurdyc/neighbor/pkg/config"
-	"github.com/mccurdyc/neighbor/pkg/github"
 	"github.com/mccurdyc/neighbor/pkg/runner"
 	"github.com/mccurdyc/neighbor/sdk/retrieval"
+	"github.com/mccurdyc/neighbor/sdk/search"
 )
 
 const projectDir = "_external_project"
@@ -76,34 +77,39 @@ func main() {
 		glog.Exitf("failed to create project directory: %+v", err)
 	}
 
-	searcher, err := github.NewSearcher(github.Connect(ctx, *tkn), github.SearchType(*searchType))
-	if err != nil {
-		glog.Exitf("error creating searcher: %+v", err)
-	}
-
-	numDesiredResults := 10 // TODO: read the number of desired results from a config value
-	repositories, err := github.Search(ctx, searcher, *query, github.SearchOptions().WithNumberOfResults(numDesiredResults))
-	if err != nil {
-		glog.Errorf("error searching GitHub: %+v", err)
-	}
-
-	var conf = retrieval.BackendConfig{}
-
+	var searchConfig = search.BackendConfig{}
 	if len(*tkn) != 0 {
-		conf.AuthMethod = "token"
-		conf.Config = map[string]string{"token": *tkn}
+		searchConfig.AuthMethod = "token"
+		searchConfig.Config = map[string]string{"token": *tkn}
 	}
 
-	gitClone, err := git.Factory(ctx, &conf)
+	githubSearch, err := github.Factory(ctx, &searchConfig)
+	if err != nil {
+		glog.Exitf("failed to create GitHub searcher: %+v", err)
+	}
+
+	numDesiredResults := 10 // TODO: make configurable
+	repositories, err := githubSearch.Search(context.TODO(), *query, numDesiredResults)
+	if err != nil {
+		glog.Errorf("failed to search GitHub for projects: %+v", err)
+	}
+
+	var retrievalConfig = retrieval.BackendConfig{}
+	if len(*tkn) != 0 {
+		retrievalConfig.AuthMethod = "token"
+		retrievalConfig.Config = map[string]string{"token": *tkn}
+	}
+
+	gitClone, err := git.Factory(ctx, &retrievalConfig)
 	if err != nil {
 		glog.Exitf("error creating Git project retriever: %+v", err)
 	}
 
 	for _, repo := range repositories {
-		dir := filepath.Join(workingDir, projectDir, repo.GetFullName())
-		err := gitClone.Retrieve(ctx, repo.GetCloneURL(), dir)
+		dir := filepath.Join(workingDir, projectDir, repo.Name())
+		err := gitClone.Retrieve(ctx, repo.SourceLocation(), dir)
 		if err != nil {
-			glog.Errorf("error retrieving project ('%s): %+v", repo.GetFullName(), err)
+			glog.Errorf("error retrieving project ('%s): %+v", repo.Name(), err)
 			continue
 		}
 
