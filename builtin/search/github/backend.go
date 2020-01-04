@@ -25,13 +25,13 @@ const (
 func Factory(ctx context.Context, conf *search.BackendConfig) (search.Backend, error) {
 	if len(conf.AuthMethod) == 0 {
 		// auth method required for GitHub code search - https://developer.github.com/v3/search/#search-code
-		if conf.SearchMethod == search.CodeSearch {
+		if conf.SearchMethod == search.Code {
 			return nil, fmt.Errorf("auth method required for code search")
 		}
 	}
 
 	var entity searchMethodEntity
-	if conf.SearchMethod == search.VersionSearch {
+	if conf.SearchMethod == search.Version {
 		if conf.Config["version_entity"] == "" {
 			return nil, fmt.Errorf("version_entity required with VersionSearch search method")
 		}
@@ -39,7 +39,7 @@ func Factory(ctx context.Context, conf *search.BackendConfig) (search.Backend, e
 		entity = conf.Config["version_entity"]
 	}
 
-	if conf.SearchMethod == search.MetaSearch {
+	if conf.SearchMethod == search.Meta {
 		if conf.Config["meta_entity"] == "" {
 			return nil, fmt.Errorf("meta_entity required with MetaSearch search method")
 		}
@@ -86,18 +86,19 @@ func Factory(ctx context.Context, conf *search.BackendConfig) (search.Backend, e
 
 type Backend struct {
 	auth               transport.AuthMethod
-	searchMethod       search.SearchMethod
+	searchMethod       search.Method
 	searchMethodEntity searchMethodEntity
 }
 
 func (b *Backend) Search(ctx context.Context, query string, numDesiredResults int) ([]project.Backend, error) {
-	// TODO: these search functions could possibly be an interface
+	// TODO handle pagination in here (i.e., calling the search helpers multiple times and collating results)
 	switch b.searchMethod {
-	case search.ProjectSearch:
-		searchRepository()
-	case search.CodeSearch:
-		searchCode()
-	case search.MetaSearch:
+	case search.Project:
+		searchRepository(ctx)
+	case search.Code:
+		searchCode(ctx)
+	case search.Meta:
+		searchMeta(ctx, b.searchMethodEntity)
 	}
 
 	return nil, nil // TODO: fix
