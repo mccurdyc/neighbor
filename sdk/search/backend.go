@@ -6,23 +6,23 @@ import (
 	"github.com/mccurdyc/neighbor/sdk/project"
 )
 
-// SearchMethod is the method of search to be used to find projects.
-type SearchMethod string
+// Method is the method of search to be used to find projects.
+type Method = uint32
 
 const (
-	// ProjectSearch is a search method for explicitly searching for projects
+	// Project is a search method for explicitly searching for projects
 	// (e.g., by name, etc.).
-	ProjectSearch SearchMethod = "project"
-	// CodeSearch is a search method for searching through code to identify projects
+	Project Method = iota
+	// Code is a search method for searching through code to identify projects
 	// that meet the code search criteria (e.g., projects written in a language,
 	// or that have a specific file or tests, etc.).
-	CodeSearch SearchMethod = "code"
-	// MetaSearch is a search method for searching through project meta information
+	Code
+	// Meta is a search method for searching through project meta information
 	// (e.g., GitHub topics, GitHub pull requests, etc.).
-	MetaSearch SearchMethod = "meta"
-	// VersionSearch is a search method for searching through the revision history
+	Meta
+	// Version is a search method for searching through the revision history
 	// of a project (e.g., Git commits, GitHub pull requests, etc.).
-	VersionSearch SearchMethod = "version"
+	Version
 )
 
 // Backend is the minimal interface for a search backend.
@@ -37,7 +37,7 @@ type BackendConfig struct {
 	AuthMethod string
 
 	// SearchMethod is the method of search to be used to find projects.
-	SearchMethod SearchMethod
+	SearchMethod Method
 
 	// Config is for optional or secondary configuration.
 	Config map[string]string
