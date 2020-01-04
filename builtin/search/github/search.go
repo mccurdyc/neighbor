@@ -18,7 +18,7 @@ type searchOptions struct {
 	maxPageSize       int
 }
 
-func searchRepositories(ctx context.Context, c *github.Client, query string, numDesiredResults int) ([]project.Backend, error) {
+func searchRepositories(ctx context.Context, c *github.Client, query string, numDesiredResults int) ([]project.Backend, *github.Response, error) {
 	res := make([]project.Backend, 0, numDesiredResults)
 
 	gitHubSearchOptions := github.SearchOptions{
@@ -27,9 +27,9 @@ func searchRepositories(ctx context.Context, c *github.Client, query string, num
 		},
 	}
 
-	searchRes, _, err := c.Search.Repositories(ctx, query, &gitHubSearchOptions)
+	searchRes, resp, err := c.Search.Repositories(ctx, query, &gitHubSearchOptions)
 	if err != nil {
-		return res, err
+		return res, resp, err
 	}
 
 	for _, repo := range searchRes.Repositories {
@@ -51,7 +51,7 @@ func searchRepositories(ctx context.Context, c *github.Client, query string, num
 		res = append(res, p)
 	}
 
-	return res, nil
+	return res, resp, nil
 }
 
 func getLatestCommit(ctx context.Context, c *github.Client, repo github.Repository) (*github.RepositoryCommit, error) {
@@ -67,11 +67,11 @@ func getLatestCommit(ctx context.Context, c *github.Client, repo github.Reposito
 	return commits[0], nil
 }
 
-func searchCode(ctx context.Context) ([]project.Backend, error) {
+func searchCode(ctx context.Context) ([]project.Backend, *github.Response, error) {
 	panic("not implemented")
 }
 
-func searchMeta(ctx context.Context, entity searchMethodEntity) ([]project.Backend, error) {
+func searchMeta(ctx context.Context, entity searchMethodEntity) ([]project.Backend, *github.Response, error) {
 	switch entity {
 	case topic:
 		return searchTopic(ctx)
@@ -81,17 +81,17 @@ func searchMeta(ctx context.Context, entity searchMethodEntity) ([]project.Backe
 		return searchLabel(ctx)
 	}
 
-	return nil, fmt.Errorf("search method entity unsupported")
+	return nil, nil, fmt.Errorf("search method entity unsupported")
 }
 
-func searchTopic(ctx context.Context) ([]project.Backend, error) {
+func searchTopic(ctx context.Context) ([]project.Backend, *github.Response, error) {
 	panic("not implemented")
 }
 
-func searchLabel(ctx context.Context) ([]project.Backend, error) {
+func searchLabel(ctx context.Context) ([]project.Backend, *github.Response, error) {
 	panic("not implemented")
 }
 
-func searchTextMatch(ctx context.Context) ([]project.Backend, error) {
+func searchTextMatch(ctx context.Context) ([]project.Backend, *github.Response, error) {
 	panic("not implemented")
 }
