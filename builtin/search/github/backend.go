@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/go-github/github"
 	"github.com/mccurdyc/neighbor/sdk/project"
 	"github.com/mccurdyc/neighbor/sdk/search"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
@@ -79,6 +80,7 @@ func Factory(ctx context.Context, conf *search.BackendConfig) (search.Backend, e
 
 	return &Backend{
 		auth:               auth,
+		githubClient:       github.NewClient(conf.Client),
 		searchMethod:       conf.SearchMethod,
 		searchMethodEntity: entity,
 	}, nil
@@ -86,6 +88,7 @@ func Factory(ctx context.Context, conf *search.BackendConfig) (search.Backend, e
 
 type Backend struct {
 	auth               transport.AuthMethod
+	githubClient       *github.Client
 	searchMethod       search.Method
 	searchMethodEntity searchMethodEntity
 }
@@ -94,7 +97,7 @@ func (b *Backend) Search(ctx context.Context, query string, numDesiredResults in
 	// TODO handle pagination in here (i.e., calling the search helpers multiple times and collating results)
 	switch b.searchMethod {
 	case search.Project:
-		searchRepository(ctx)
+		searchRepositories(ctx, b.githubClient, query, numDesiredResults)
 	case search.Code:
 		searchCode(ctx)
 	case search.Meta:
