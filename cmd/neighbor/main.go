@@ -77,7 +77,10 @@ func main() {
 		glog.Exitf("failed to create project directory: %+v", err)
 	}
 
-	var searchConfig = search.BackendConfig{}
+	searchConfig := search.BackendConfig{
+		SearchMethod: search.Method(*searchType),
+	}
+
 	if len(*tkn) != 0 {
 		searchConfig.AuthMethod = "token"
 		searchConfig.Config = map[string]string{"token": *tkn}
@@ -94,7 +97,7 @@ func main() {
 		glog.Errorf("failed to search GitHub for projects: %+v", err)
 	}
 
-	var retrievalConfig = retrieval.BackendConfig{}
+	var retrievalConfig retrieval.BackendConfig
 	if len(*tkn) != 0 {
 		retrievalConfig.AuthMethod = "token"
 		retrievalConfig.Config = map[string]string{"token": *tkn}
