@@ -105,6 +105,13 @@ type Backend struct {
 func (b *Backend) Search(ctx context.Context, query string, numDesiredResults int) ([]project.Backend, error) {
 	res := make([]project.Backend, 0, numDesiredResults)
 
+	var page int
+	opts := github.SearchOptions{
+		ListOptions: github.ListOptions{
+			PerPage: pageSize(numDesiredResults, maxPageSize),
+		},
+	}
+
 	for {
 		var (
 			searchRes []project.Backend
@@ -114,26 +121,28 @@ func (b *Backend) Search(ctx context.Context, query string, numDesiredResults in
 
 		switch b.searchMethod {
 		case search.Project:
-			searchRes, resp, err = searchRepositories(ctx, b.githubClient, query, numDesiredResults)
+			searchRes, resp, err = searchRepositories(ctx, b.githubClient, query, numDesiredResults, &opts)
 		case search.Code:
-			searchRes, resp, err = searchCode(ctx)
+			searchRes, resp, err = searchCode(ctx, &opts)
 		case search.Meta:
-			searchRes, resp, err = searchMeta(ctx, b.searchMethodEntity)
+			searchRes, resp, err = searchMeta(ctx, b.searchMethodEntity, &opts)
 		}
 
-		res = append(res, searchRes...)
 		if err != nil {
 			return nil, err
 		}
 
-		if len(res) >= numDesiredResults {
-			break
+		for _, r := range searchRes {
+			res = append(res, r)
+			if len(res) >= numDesiredResults {
+				return res, nil
+			}
 		}
 
-		if resp.NextPage == 0 {
+		if resp == nil || resp.NextPage == 0 {
 			return res, ErrFewerResultsThanDesired
 		}
-	}
 
-	return res, nil
+		opts.ListOptions.Page = page + 1
+	}
 }
