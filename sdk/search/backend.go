@@ -33,7 +33,7 @@ type Backend interface {
 
 // BackendConfig contains the configuration parameters for a search backend.
 type BackendConfig struct {
-	// AuthRequired is indicates the method, if one, to be used for authentication
+	// AuthMethod is indicates the method, if one, to be used for authentication
 	// by the retrieval backend.
 	AuthMethod string
 
