@@ -77,8 +77,18 @@ func main() {
 		glog.Exitf("failed to create project directory: %+v", err)
 	}
 
+	var method uint32
+	switch *searchType {
+	case "repository":
+		method = search.Project
+	case "code":
+		method = search.Code
+	default:
+		glog.Exit("unsupported search type")
+	}
+
 	searchConfig := search.BackendConfig{
-		SearchMethod: search.Method(*searchType),
+		SearchMethod: search.Method(method),
 	}
 
 	if len(*tkn) != 0 {
