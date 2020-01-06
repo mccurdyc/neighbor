@@ -126,6 +126,8 @@ func (b *Backend) Search(ctx context.Context, query string, numDesiredResults in
 			searchRes, resp, err = searchCode(ctx, &opts)
 		case search.Meta:
 			searchRes, resp, err = searchMeta(ctx, b.searchMethodEntity, &opts)
+		default:
+			return nil, fmt.Errorf("unsupported search method")
 		}
 
 		if err != nil {
