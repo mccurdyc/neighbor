@@ -43,7 +43,7 @@ func Factory(ctx context.Context, conf *search.BackendConfig) (search.Backend, e
 	var entity searchMethodEntity
 	if conf.SearchMethod == search.Version {
 		if conf.Config["version_entity"] == "" {
-			return nil, fmt.Errorf("version_entity required with VersionSearch search method")
+			return nil, fmt.Errorf("version_entity required with Version search method")
 		}
 
 		entity = conf.Config["version_entity"]
@@ -51,7 +51,7 @@ func Factory(ctx context.Context, conf *search.BackendConfig) (search.Backend, e
 
 	if conf.SearchMethod == search.Meta {
 		if conf.Config["meta_entity"] == "" {
-			return nil, fmt.Errorf("meta_entity required with MetaSearch search method")
+			return nil, fmt.Errorf("meta_entity required with Meta search method")
 		}
 
 		entity = conf.Config["meta_entity"]
