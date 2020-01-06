@@ -49,7 +49,7 @@ func searchRepositories(ctx context.Context, c Client, query string, numDesiredR
 }
 
 func getLatestCommit(ctx context.Context, c Client, repo github.Repository) (*github.RepositoryCommit, error) {
-	commits, _, err := c.RepositoryService.ListCommits(ctx, repo.GetOwner().String(), repo.GetName(), nil)
+	commits, _, err := c.RepositoryService.ListCommits(ctx, repo.GetOwner().GetName(), repo.GetName(), nil)
 	if err != nil {
 		return nil, err
 	}
