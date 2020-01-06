@@ -18,10 +18,10 @@ type searchOptions struct {
 	maxPageSize       int
 }
 
-func searchRepositories(ctx context.Context, c *github.Client, query string, numDesiredResults int, opts *github.SearchOptions) ([]project.Backend, *github.Response, error) {
+func searchRepositories(ctx context.Context, c Client, query string, numDesiredResults int, opts *github.SearchOptions) ([]project.Backend, *github.Response, error) {
 	res := make([]project.Backend, 0, numDesiredResults)
 
-	searchRes, resp, err := c.Search.Repositories(ctx, query, opts)
+	searchRes, resp, err := c.SearchService.Repositories(ctx, query, opts)
 	if err != nil {
 		return res, resp, err
 	}
@@ -48,8 +48,8 @@ func searchRepositories(ctx context.Context, c *github.Client, query string, num
 	return res, resp, nil
 }
 
-func getLatestCommit(ctx context.Context, c *github.Client, repo github.Repository) (*github.RepositoryCommit, error) {
-	commits, _, err := c.Repositories.ListCommits(ctx, repo.GetOwner().String(), repo.GetName(), nil)
+func getLatestCommit(ctx context.Context, c Client, repo github.Repository) (*github.RepositoryCommit, error) {
+	commits, _, err := c.RepositoryService.ListCommits(ctx, repo.GetOwner().String(), repo.GetName(), nil)
 	if err != nil {
 		return nil, err
 	}
