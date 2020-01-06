@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-github/github"
 	"github.com/mccurdyc/neighbor/sdk/project"
 	"github.com/mccurdyc/neighbor/sdk/search"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport/http"
@@ -192,7 +193,20 @@ func Test_Factory(t *testing.T) {
 }
 
 type mockClient struct {
-	repositories []project.Backend
+	repositories *github.RepositoriesSearchResult
+	commits      []*github.RepositoryCommit
+	response     *github.Response
+	err          error
+}
+
+// Repositories returns the repositories for a given search query.
+func (m *mockClient) Repositories(ctx context.Context, query string, opts *github.SearchOptions) (*github.RepositoriesSearchResult, *github.Response, error) {
+	return m.repositories, m.response, m.err
+}
+
+// ListCommits lists the commits for a specific repository.
+func (m *mockClient) ListCommits(ctx context.Context, owner string, repo string, opts *github.CommitsListOptions) ([]*github.RepositoryCommit, *github.Response, error) {
+	return m.commits, m.response, m.err
 }
 
 func Test_Search(t *testing.T) {
@@ -214,7 +228,7 @@ func Test_Search(t *testing.T) {
 		"numDesiredResults_equals_maxPageSize": {
 			input: input{
 				backend: &Backend{
-					githubClient: mockClient,
+					githubClient: &mockClient{},
 				},
 			},
 			want: want{},
