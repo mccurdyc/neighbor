@@ -87,19 +87,26 @@ func Factory(ctx context.Context, conf *search.BackendConfig) (search.Backend, e
 		}
 	}
 
+	gitHubClient := github.NewClient(conf.Client)
+
 	return &Backend{
-		auth:               auth,
-		githubClient:       github.NewClient(conf.Client),
+		auth: auth,
+		githubClient: Client{
+			SearchService:     gitHubClient.Search,
+			RepositoryService: gitHubClient.Repositories,
+		},
 		searchMethod:       conf.SearchMethod,
 		searchMethodEntity: entity,
+		maxPageSize:        maxPageSize,
 	}, nil
 }
 
 type Backend struct {
 	auth               transport.AuthMethod
-	githubClient       *github.Client
+	githubClient       Client
 	searchMethod       search.Method
 	searchMethodEntity searchMethodEntity
+	maxPageSize        int
 }
 
 func (b *Backend) Search(ctx context.Context, query string, numDesiredResults int) ([]project.Backend, error) {
@@ -108,7 +115,7 @@ func (b *Backend) Search(ctx context.Context, query string, numDesiredResults in
 	var page int
 	opts := github.SearchOptions{
 		ListOptions: github.ListOptions{
-			PerPage: pageSize(numDesiredResults, maxPageSize),
+			PerPage: pageSize(numDesiredResults, b.maxPageSize),
 		},
 	}
 
