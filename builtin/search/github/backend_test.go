@@ -3,10 +3,12 @@ package github
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-github/github"
+	githubProject "github.com/mccurdyc/neighbor/builtin/project/github"
 	"github.com/mccurdyc/neighbor/sdk/project"
 	"github.com/mccurdyc/neighbor/sdk/search"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport/http"
@@ -209,11 +211,58 @@ func (m *mockClient) ListCommits(ctx context.Context, owner string, repo string,
 	return m.commits, m.response, m.err
 }
 
+func newMockClient(numDesiredResults int, numCommits int, err error) Client {
+	repos := make([]github.Repository, 0, numDesiredResults)
+
+	for i := 0; i < numDesiredResults; i++ {
+		name := strconv.Itoa(i)
+		fullname := fmt.Sprintf("repo/%s", name)
+		cloneURL := fmt.Sprintf("repo%d.git", i)
+		ownerName := fmt.Sprintf("owner%d", i)
+
+		repos = append(repos, github.Repository{
+			Name:     &name,
+			FullName: &fullname,
+			CloneURL: &cloneURL,
+			Owner: &github.User{
+				Name: &ownerName,
+			},
+		})
+	}
+
+	commits := make([]*github.RepositoryCommit, 0, numCommits)
+	for i := 0; i < numCommits; i++ {
+		sha := fmt.Sprintf("sha%d", i)
+
+		commits = append(commits,
+			&github.RepositoryCommit{
+				SHA: &sha,
+			})
+	}
+
+	return Client{
+		SearchService: &mockClient{
+			commits:  commits,
+			response: &github.Response{},
+			err:      err,
+		},
+		RepositoryService: &mockClient{
+			repositories: &github.RepositoriesSearchResult{
+				Repositories: repos,
+			},
+			response: &github.Response{},
+			err:      err,
+		},
+	}
+}
+
 func Test_Search(t *testing.T) {
 	type input struct {
 		backend           *Backend
-		query             string
 		numDesiredResults int
+		numCommits        int
+		maxPageSize       int
+		clientErr         error
 	}
 
 	type want struct {
@@ -228,16 +277,38 @@ func Test_Search(t *testing.T) {
 		"numDesiredResults_equals_maxPageSize": {
 			input: input{
 				backend: &Backend{
-					githubClient: &mockClient{},
+					searchMethod: search.Project,
 				},
+				maxPageSize:       3,
+				numDesiredResults: 3,
+				numCommits:        2,
+				clientErr:         nil,
 			},
-			want: want{},
+			want: want{
+				err: nil,
+			},
 		},
 	}
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			got, gotErr := tt.input.backend.Search(context.TODO(), tt.input.query, tt.input.numDesiredResults)
+			tt.input.backend.githubClient = newMockClient(tt.input.numDesiredResults, tt.input.numCommits, tt.input.clientErr)
+
+			wantProjects := make([]project.Backend, 0, tt.input.numDesiredResults)
+			for i := 0; i < tt.input.numDesiredResults; i++ {
+				project, err := githubProject.Factory(context.TODO(), &project.BackendConfig{
+					Name:           fmt.Sprintf("repo/%d", i),
+					Version:        fmt.Sprintf("sha%d", i),
+					SourceLocation: fmt.Sprintf("cloneurl%d.git", i),
+				})
+				if err != nil {
+					t.Errorf("failed to create project: %+v", err)
+				}
+
+				wantProjects = append(wantProjects, project)
+			}
+
+			got, gotErr := tt.input.backend.Search(context.TODO(), "query", tt.input.numDesiredResults)
 
 			// https://github.com/google/go-cmp/issues/24
 			errorCmp := func(x, y error) bool {
@@ -251,7 +322,7 @@ func Test_Search(t *testing.T) {
 				t.Errorf("Search() \n\tgotErr: '%+v'\n\twantErr: '%+v'", gotErr, tt.want.err)
 			}
 
-			if diff := cmp.Diff(tt.want.projects, got); diff != "" {
+			if diff := cmp.Diff(wantProjects, got); diff != "" {
 				t.Errorf("Search() mismatch (-want +got):\n%s", diff)
 			}
 		})
