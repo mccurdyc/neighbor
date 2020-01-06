@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/mccurdyc/neighbor/sdk/project"
 	"github.com/mccurdyc/neighbor/sdk/search"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 )
@@ -185,6 +186,59 @@ func Test_Factory(t *testing.T) {
 
 			if ok := errorCmp(gotErr, tt.want.err); !ok {
 				t.Errorf("Factory() \n\tgotErr: '%+v'\n\twantErr: '%+v'", gotErr, tt.want.err)
+			}
+		})
+	}
+}
+
+type mockClient struct {
+	repositories []project.Backend
+}
+
+func Test_Search(t *testing.T) {
+	type input struct {
+		backend           *Backend
+		query             string
+		numDesiredResults int
+	}
+
+	type want struct {
+		projects []project.Backend
+		err      error
+	}
+
+	var tests = map[string]struct {
+		input input
+		want  want
+	}{
+		"numDesiredResults_equals_maxPageSize": {
+			input: input{
+				backend: &Backend{
+					githubClient: mockClient,
+				},
+			},
+			want: want{},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			got, gotErr := tt.input.backend.Search(context.TODO(), tt.input.query, tt.input.numDesiredResults)
+
+			// https://github.com/google/go-cmp/issues/24
+			errorCmp := func(x, y error) bool {
+				if x == nil || y == nil {
+					return x == nil && y == nil
+				}
+				return x.Error() == y.Error()
+			}
+
+			if ok := errorCmp(gotErr, tt.want.err); !ok {
+				t.Errorf("Search() \n\tgotErr: '%+v'\n\twantErr: '%+v'", gotErr, tt.want.err)
+			}
+
+			if diff := cmp.Diff(tt.want.projects, got); diff != "" {
+				t.Errorf("Search() mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
