@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strconv"
 	"testing"
 
@@ -217,7 +218,7 @@ func newMockClient(numDesiredResults int, numCommits int, err error) Client {
 	for i := 0; i < numDesiredResults; i++ {
 		name := strconv.Itoa(i)
 		fullname := fmt.Sprintf("repo/%s", name)
-		cloneURL := fmt.Sprintf("repo%d.git", i)
+		cloneURL := fmt.Sprintf("cloneurl%d.git", i)
 		ownerName := fmt.Sprintf("owner%d", i)
 
 		repos = append(repos, github.Repository{
@@ -241,12 +242,12 @@ func newMockClient(numDesiredResults int, numCommits int, err error) Client {
 	}
 
 	return Client{
-		SearchService: &mockClient{
+		RepositoryService: &mockClient{
 			commits:  commits,
 			response: &github.Response{},
 			err:      err,
 		},
-		RepositoryService: &mockClient{
+		SearchService: &mockClient{
 			repositories: &github.RepositoriesSearchResult{
 				Repositories: repos,
 			},
@@ -298,8 +299,8 @@ func Test_Search(t *testing.T) {
 			for i := 0; i < tt.input.numDesiredResults; i++ {
 				project, err := githubProject.Factory(context.TODO(), &project.BackendConfig{
 					Name:           fmt.Sprintf("repo/%d", i),
-					Version:        fmt.Sprintf("sha%d", i),
-					SourceLocation: fmt.Sprintf("cloneurl%d.git", i),
+					Version:        "sha0", // we always want the latest commit
+					SourceLocation: fmt.Sprintf("ccloneurl%d.git", i),
 				})
 				if err != nil {
 					t.Errorf("failed to create project: %+v", err)
@@ -322,10 +323,22 @@ func Test_Search(t *testing.T) {
 				t.Errorf("Search() \n\tgotErr: '%+v'\n\twantErr: '%+v'", gotErr, tt.want.err)
 			}
 
-			if diff := cmp.Diff(wantProjects, got); diff != "" {
-				t.Errorf("Search() mismatch (-want +got):\n%s", diff)
+			for i := 0; i < len(wantProjects); i++ {
+				compareProject(t, "Search", wantProjects[i], got[i])
 			}
 		})
+	}
+}
+
+func compareProject(t *testing.T, name string, want, got project.Backend) {
+	t.Helper()
+
+	if want == nil && got != nil {
+		t.Errorf("%s(): mismatched nil projects", name)
+	}
+
+	if !reflect.DeepEqual(want, got) {
+		t.Errorf("%s(): mismatched\n\twant: %+v\n\tgot: %+v", name, want, got)
 	}
 }
 
