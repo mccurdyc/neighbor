@@ -32,6 +32,7 @@ const (
 // or the search query may need to be tweaked.
 var ErrFewerResultsThanDesired = fmt.Errorf("contains fewer results than desired")
 
+// Factory is the factory function to be used to create a GitHub search backend.
 func Factory(ctx context.Context, conf *search.BackendConfig) (search.Backend, error) {
 	if len(conf.AuthMethod) == 0 {
 		// auth method required for GitHub code search - https://developer.github.com/v3/search/#search-code
@@ -101,6 +102,7 @@ func Factory(ctx context.Context, conf *search.BackendConfig) (search.Backend, e
 	}, nil
 }
 
+// Backend is a GitHub search backend.
 type Backend struct {
 	auth               transport.AuthMethod
 	githubClient       Client
@@ -109,6 +111,8 @@ type Backend struct {
 	maxPageSize        int
 }
 
+// Search is the search function for searching GitHub for projects, code snippets,
+// labels, topics, etc. and transparently paginating results.
 func (b *Backend) Search(ctx context.Context, query string, numDesiredResults int) ([]project.Backend, error) {
 	res := make([]project.Backend, 0, numDesiredResults)
 
