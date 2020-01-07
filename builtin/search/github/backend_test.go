@@ -212,10 +212,10 @@ func (m *mockClient) ListCommits(ctx context.Context, owner string, repo string,
 	return m.commits, m.response, m.err
 }
 
-func newMockClient(numDesiredResults int, numCommits int, err error) Client {
-	repos := make([]github.Repository, 0, numDesiredResults)
+func newMockClient(maxPageSize int, numCommits int, nextPage bool, err error) Client {
+	repos := make([]github.Repository, 0, maxPageSize)
 
-	for i := 0; i < numDesiredResults; i++ {
+	for i := 0; i < maxPageSize; i++ {
 		name := strconv.Itoa(i)
 		fullname := fmt.Sprintf("repo/%s", name)
 		cloneURL := fmt.Sprintf("cloneurl%d.git", i)
@@ -241,6 +241,13 @@ func newMockClient(numDesiredResults int, numCommits int, err error) Client {
 			})
 	}
 
+	var resp github.Response
+	if nextPage {
+		resp = github.Response{
+			NextPage: 1,
+		}
+	}
+
 	return Client{
 		RepositoryService: &mockClient{
 			commits:  commits,
@@ -251,10 +258,40 @@ func newMockClient(numDesiredResults int, numCommits int, err error) Client {
 			repositories: &github.RepositoriesSearchResult{
 				Repositories: repos,
 			},
-			response: &github.Response{},
+			response: &resp,
 			err:      err,
 		},
 	}
+}
+
+func generateWantProjects(t *testing.T, name string, numDesiredResults int, maxPageSize int, nextPage bool) []project.Backend {
+	t.Helper()
+
+	wantProjects := make([]project.Backend, 0, numDesiredResults)
+	for len(wantProjects) < numDesiredResults {
+		for i := 0; i < maxPageSize; i++ {
+			if len(wantProjects) >= numDesiredResults {
+				break
+			}
+
+			project, err := githubProject.Factory(context.TODO(), &project.BackendConfig{
+				Name:           fmt.Sprintf("repo/%d", i),
+				Version:        "sha0", // we always want the latest commit
+				SourceLocation: fmt.Sprintf("cloneurl%d.git", i),
+			})
+			if err != nil {
+				t.Errorf("%s(): failed to create project: %+v", name, err)
+			}
+
+			wantProjects = append(wantProjects, project)
+		}
+
+		if nextPage == false {
+			break
+		}
+	}
+
+	return wantProjects
 }
 
 func Test_Search(t *testing.T) {
@@ -263,12 +300,13 @@ func Test_Search(t *testing.T) {
 		numDesiredResults int
 		numCommits        int
 		maxPageSize       int
+		nextPage          bool
 		clientErr         error
 	}
 
 	type want struct {
-		projects []project.Backend
-		err      error
+		projectsFn func(*testing.T, string, int, int, bool) []project.Backend
+		err        error
 	}
 
 	var tests = map[string]struct {
@@ -284,30 +322,74 @@ func Test_Search(t *testing.T) {
 				numDesiredResults: 3,
 				numCommits:        2,
 				clientErr:         nil,
+				nextPage:          false,
 			},
 			want: want{
-				err: nil,
+				projectsFn: generateWantProjects,
+				err:        nil,
+			},
+		},
+
+		"numDesiredResults_greater_than_maxPageSize": {
+			input: input{
+				backend: &Backend{
+					searchMethod: search.Project,
+				},
+				maxPageSize:       3,
+				numDesiredResults: 5,
+				numCommits:        2,
+				clientErr:         nil,
+				nextPage:          true,
+			},
+			want: want{
+				projectsFn: generateWantProjects,
+				err:        nil,
+			},
+		},
+
+		"less_than_desired": {
+			input: input{
+				backend: &Backend{
+					searchMethod: search.Project,
+				},
+				maxPageSize:       3,
+				numDesiredResults: 5,
+				numCommits:        2,
+				clientErr:         nil,
+				nextPage:          false,
+			},
+			want: want{
+				projectsFn: generateWantProjects,
+				err:        ErrFewerResultsThanDesired,
+			},
+		},
+
+		"github_client_error": {
+			input: input{
+				backend: &Backend{
+					searchMethod: search.Project,
+				},
+				maxPageSize:       3,
+				numDesiredResults: 5,
+				numCommits:        2,
+				clientErr:         fmt.Errorf("github client error"),
+				nextPage:          false,
+			},
+			want: want{
+				projectsFn: func(_ *testing.T, _ string, _ int, _ int, _ bool) []project.Backend { return nil },
+				err:        fmt.Errorf("github client error"),
 			},
 		},
 	}
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			tt.input.backend.githubClient = newMockClient(tt.input.numDesiredResults, tt.input.numCommits, tt.input.clientErr)
+			tt.input.backend.githubClient = newMockClient(tt.input.maxPageSize, tt.input.numCommits, tt.input.nextPage, tt.input.clientErr)
 
-			wantProjects := make([]project.Backend, 0, tt.input.numDesiredResults)
-			for i := 0; i < tt.input.numDesiredResults; i++ {
-				project, err := githubProject.Factory(context.TODO(), &project.BackendConfig{
-					Name:           fmt.Sprintf("repo/%d", i),
-					Version:        "sha0", // we always want the latest commit
-					SourceLocation: fmt.Sprintf("ccloneurl%d.git", i),
-				})
-				if err != nil {
-					t.Errorf("failed to create project: %+v", err)
-				}
-
-				wantProjects = append(wantProjects, project)
+			if tt.want.projectsFn == nil {
+				t.Fatal("Search(): a want project generation function is required")
 			}
+			wantProjects := tt.want.projectsFn(t, "Search", tt.input.numDesiredResults, tt.input.maxPageSize, tt.input.nextPage)
 
 			got, gotErr := tt.input.backend.Search(context.TODO(), "query", tt.input.numDesiredResults)
 
@@ -321,6 +403,11 @@ func Test_Search(t *testing.T) {
 
 			if ok := errorCmp(gotErr, tt.want.err); !ok {
 				t.Errorf("Search() \n\tgotErr: '%+v'\n\twantErr: '%+v'", gotErr, tt.want.err)
+			}
+
+			if len(wantProjects) != len(got) {
+				t.Errorf("Search() returned a different amount of results: \n\twant: %+v\n\tgot: %+v", len(wantProjects), len(got))
+				t.FailNow()
 			}
 
 			for i := 0; i < len(wantProjects); i++ {
