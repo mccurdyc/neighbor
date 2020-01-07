@@ -26,6 +26,10 @@ func searchRepositories(ctx context.Context, c Client, query string, numDesiredR
 		return res, resp, err
 	}
 
+	if searchRes == nil {
+		return res, resp, fmt.Errorf("empty repository response")
+	}
+
 	for _, repo := range searchRes.Repositories {
 		var version string
 		latest, _ := getLatestCommit(ctx, c, repo)
