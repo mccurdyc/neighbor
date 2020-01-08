@@ -3,7 +3,6 @@ package github
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -34,6 +33,18 @@ func Test_Factory(t *testing.T) {
 			want: want{
 				be:  nil,
 				err: fmt.Errorf("name cannot be empty"),
+			},
+		},
+
+		"config_with_no_source_location": {
+			input: input{
+				conf: &project.BackendConfig{
+					Name: "name",
+				},
+			},
+			want: want{
+				be:  nil,
+				err: fmt.Errorf("source location cannot be empty"),
 			},
 		},
 	}
