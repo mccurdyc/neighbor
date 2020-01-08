@@ -20,6 +20,7 @@ type Client struct {
 type SearchService interface {
 	// Repositories returns the repositories for a given search query.
 	Repositories(context.Context, string, *github.SearchOptions) (*github.RepositoriesSearchResult, *github.Response, error)
+	Code(context.Context, string, *github.SearchOptions) (*github.CodeSearchResult, *github.Response, error)
 }
 
 // RepositoryService is the minimal repository search interface required by the GitHub search backend.
