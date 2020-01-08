@@ -102,9 +102,9 @@ func main() {
 	}
 
 	numDesiredResults := 10 // TODO: make configurable
-	repositories, err := githubSearch.Search(context.TODO(), *query, numDesiredResults)
+	projects, err := githubSearch.Search(context.TODO(), *query, numDesiredResults)
 	if err != nil {
-		glog.Errorf("failed to search GitHub for projects: %+v", err)
+		glog.Errorf("encountered error while searching GitHub for projects: %+v", err)
 	}
 
 	var retrievalConfig retrieval.BackendConfig
@@ -118,11 +118,11 @@ func main() {
 		glog.Exitf("error creating Git project retriever: %+v", err)
 	}
 
-	for _, repo := range repositories {
-		dir := filepath.Join(workingDir, projectDir, repo.Name())
-		err := gitClone.Retrieve(ctx, repo.SourceLocation(), dir)
+	for _, p := range projects {
+		dir := filepath.Join(workingDir, projectDir, p.Name())
+		err := gitClone.Retrieve(ctx, p.SourceLocation(), dir)
 		if err != nil {
-			glog.Errorf("error retrieving project ('%s): %+v", repo.Name(), err)
+			glog.Errorf("error retrieving project ('%s): %+v", p.Name(), err)
 			continue
 		}
 
