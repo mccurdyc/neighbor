@@ -53,7 +53,7 @@ func (b *Backend) RetrievalFunc() retrieval.Backend {
 
 // SourceLocation is the source location, i.e., where the project was discovered (e.g., GitHub).
 func (b *Backend) SourceLocation() string {
-	return b.SourceLocation()
+	return b.sourceLocation
 }
 
 // LocalLocation is the location on disk or where the project can be found in order
