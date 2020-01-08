@@ -198,9 +198,9 @@ func Test_RetrievalFunc(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			got := tt.input.backend.Version()
+			got := tt.input.backend.RetrievalFunc()
 
-			if reflect.DeepEqual(got, tt.want.value) {
+			if got != tt.want.value {
 				t.Errorf("RetrievalFunc(%+v): \n\tgot: '%+v'\n\twant: '%+v'", tt.input, got, tt.want.value)
 			}
 		})
