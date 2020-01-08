@@ -88,13 +88,13 @@ func Factory(ctx context.Context, conf *search.BackendConfig) (search.Backend, e
 		}
 	}
 
-	gitHubClient := github.NewClient(conf.Client)
+	c := github.NewClient(conf.Client)
 
 	return &Backend{
 		auth: auth,
 		githubClient: Client{
-			SearchService:     gitHubClient.Search,
-			RepositoryService: gitHubClient.Repositories,
+			SearchService:     c.Search,
+			RepositoryService: c.Repositories,
 		},
 		searchMethod:       conf.SearchMethod,
 		searchMethodEntity: entity,
