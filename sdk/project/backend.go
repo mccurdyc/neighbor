@@ -1,30 +1,43 @@
 package project
 
-import "context"
+import (
+	"context"
 
-// Backend is the minimal interface necessary to implement a project backend.
-// Projects are the base entity that neighbor operates on.
-// 	1. neighbor searches for projects
-// 	2. neighbor retrieves projects
-// 	3. neighbor analyzes, evaluates or executes a binary on projects.
-type Backend interface {
-	// GetName returns the name of the project.
-	GetName() string
-	// GetLocalLocation identifies where the project currently lives on the machine
-	// running neighbor.
-	GetLocalLocation() string
-	// GetSourceLocation identifies where the project came from (e.g., Git clone URL,
-	// another on-prem server, etc.).
-	GetSourceLocation() string
-	// GetVersion is means to identify the version of the project (e.g., commit hash
-	// or semantic version for projects on GitHub).
-	GetVersion() string
-}
+	"github.com/mccurdyc/neighbor/sdk/retrieval"
+)
 
-// BackendConfig contains configuration parameters used in the factory func to
-// instantiate project backends.
-type BackendConfig struct {
-}
-
-// Factory is the factory function to create a project backend.
+// Factory is a factory function for creating projects.
 type Factory func(context.Context, *BackendConfig) (Backend, error)
+
+// Backend is the minimal interface of a project.
+type Backend interface {
+	Name() string
+	Version() string
+	RetrievalFunc() retrieval.Backend
+	SourceLocation() string
+	LocalLocation() string
+	SetLocalLocation(string)
+}
+
+// BackendConfig is the configuration parameters for a project backend.
+type BackendConfig struct {
+	// Name is the name or an identifier of the project.
+	Name string
+	// Version is the current version of the project (e.g., semantic version, Git commit hash, etc.).
+	Version string
+	// SourceLocation is where (e.g., local file path, remote url, etc.) the project
+	// can be found and retrieved from.
+	SourceLocation string
+	// RetrievalFunc is the function that was or can be used to retrieve a project.
+	// Examples of retrieval funcitons could be git or a local copy.
+	//
+	// TODO: thought - Is the Retrival func for how they _retrieved_ the project
+	// or, how someone _can retrieve_ the project?
+	//
+	// I think it is the latter because Search returns a project, but does not
+	// retrieve the project.
+	RetrievalFunc retrieval.Backend
+
+	// Config is a way to set additional, optional and/or secondary configuration values.
+	Config map[string]string
+}
