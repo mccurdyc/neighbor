@@ -3,7 +3,6 @@ package github
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -34,6 +33,36 @@ func Test_Factory(t *testing.T) {
 			want: want{
 				be:  nil,
 				err: fmt.Errorf("name cannot be empty"),
+			},
+		},
+
+		"config_with_no_source_location": {
+			input: input{
+				conf: &project.BackendConfig{
+					Name: "name",
+				},
+			},
+			want: want{
+				be:  nil,
+				err: fmt.Errorf("source location cannot be empty"),
+			},
+		},
+
+		"return_backend": {
+			input: input{
+				conf: &project.BackendConfig{
+					Name:           "name",
+					Version:        "version",
+					SourceLocation: "sourcelocation",
+				},
+			},
+			want: want{
+				be: &Backend{
+					name:           "name",
+					version:        "version",
+					sourceLocation: "sourcelocation",
+				},
+				err: nil,
 			},
 		},
 	}
@@ -198,9 +227,9 @@ func Test_RetrievalFunc(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			got := tt.input.backend.Version()
+			got := tt.input.backend.RetrievalFunc()
 
-			if reflect.DeepEqual(got, tt.want.value) {
+			if got != tt.want.value {
 				t.Errorf("RetrievalFunc(%+v): \n\tgot: '%+v'\n\twant: '%+v'", tt.input, got, tt.want.value)
 			}
 		})
