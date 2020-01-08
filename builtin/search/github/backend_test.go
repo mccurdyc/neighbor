@@ -196,6 +196,7 @@ func Test_Factory(t *testing.T) {
 }
 
 type mockClient struct {
+	code         *github.CodeSearchResult
 	repositories *github.RepositoriesSearchResult
 	commits      []*github.RepositoryCommit
 	response     *github.Response
@@ -207,6 +208,11 @@ func (m *mockClient) Repositories(ctx context.Context, query string, opts *githu
 	return m.repositories, m.response, m.err
 }
 
+// Code returns the repositories for a given code search query.
+func (m *mockClient) Code(ctx context.Context, query string, opts *github.SearchOptions) (*github.CodeSearchResult, *github.Response, error) {
+	return m.code, m.response, m.err
+}
+
 // ListCommits lists the commits for a specific repository.
 func (m *mockClient) ListCommits(ctx context.Context, owner string, repo string, opts *github.CommitsListOptions) ([]*github.RepositoryCommit, *github.Response, error) {
 	return m.commits, m.response, m.err
@@ -214,6 +220,7 @@ func (m *mockClient) ListCommits(ctx context.Context, owner string, repo string,
 
 func newMockClient(maxPageSize int, numCommits int, nextPage bool, err error) Client {
 	repos := make([]github.Repository, 0, maxPageSize)
+	codeRes := make([]github.CodeResult, 0, maxPageSize)
 
 	for i := 0; i < maxPageSize; i++ {
 		name := strconv.Itoa(i)
@@ -221,14 +228,20 @@ func newMockClient(maxPageSize int, numCommits int, nextPage bool, err error) Cl
 		cloneURL := fmt.Sprintf("cloneurl%d.git", i)
 		ownerName := fmt.Sprintf("owner%d", i)
 
-		repos = append(repos, github.Repository{
+		repo := github.Repository{
 			Name:     &name,
 			FullName: &fullname,
 			CloneURL: &cloneURL,
 			Owner: &github.User{
 				Name: &ownerName,
 			},
-		})
+		}
+
+		repos = append(repos, repo)
+		codeRes = append(codeRes,
+			github.CodeResult{
+				Repository: &repo,
+			})
 	}
 
 	commits := make([]*github.RepositoryCommit, 0, numCommits)
@@ -251,12 +264,15 @@ func newMockClient(maxPageSize int, numCommits int, nextPage bool, err error) Cl
 	return Client{
 		RepositoryService: &mockClient{
 			commits:  commits,
-			response: &github.Response{},
+			response: &resp,
 			err:      err,
 		},
 		SearchService: &mockClient{
 			repositories: &github.RepositoriesSearchResult{
 				Repositories: repos,
+			},
+			code: &github.CodeSearchResult{
+				CodeResults: codeRes,
 			},
 			response: &resp,
 			err:      err,
@@ -334,6 +350,23 @@ func Test_Search(t *testing.T) {
 			input: input{
 				backend: &Backend{
 					searchMethod: search.Project,
+				},
+				maxPageSize:       3,
+				numDesiredResults: 5,
+				numCommits:        2,
+				clientErr:         nil,
+				nextPage:          true,
+			},
+			want: want{
+				projectsFn: generateWantProjects,
+				err:        nil,
+			},
+		},
+
+		"code_search_numDesiredResults_greater_than_maxPageSize": {
+			input: input{
+				backend: &Backend{
+					searchMethod: search.Code,
 				},
 				maxPageSize:       3,
 				numDesiredResults: 5,

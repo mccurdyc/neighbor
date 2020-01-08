@@ -134,7 +134,7 @@ func (b *Backend) Search(ctx context.Context, query string, numDesiredResults in
 		case search.Project:
 			searchRes, resp, err = searchRepositories(ctx, b.githubClient, query, numDesiredResults, &opts)
 		case search.Code:
-			searchRes, resp, err = searchCode(ctx, &opts)
+			searchRes, resp, err = searchCode(ctx, b.githubClient, query, numDesiredResults, &opts)
 		case search.Meta:
 			searchRes, resp, err = searchMeta(ctx, b.searchMethodEntity, &opts)
 		default:
