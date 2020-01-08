@@ -47,6 +47,24 @@ func Test_Factory(t *testing.T) {
 				err: fmt.Errorf("source location cannot be empty"),
 			},
 		},
+
+		"return_backend": {
+			input: input{
+				conf: &project.BackendConfig{
+					Name:           "name",
+					Version:        "version",
+					SourceLocation: "sourcelocation",
+				},
+			},
+			want: want{
+				be: &Backend{
+					name:           "name",
+					version:        "version",
+					sourceLocation: "sourcelocation",
+				},
+				err: nil,
+			},
+		},
 	}
 
 	for name, tt := range tests {
