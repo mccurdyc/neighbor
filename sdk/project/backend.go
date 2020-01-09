@@ -16,7 +16,7 @@ type Backend interface {
 	RetrievalFunc() retrieval.Backend
 	SourceLocation() string
 	LocalLocation() string
-	SetLocalLocation(string)
+	SetLocalLocation(string) Backend
 }
 
 // BackendConfig is the configuration parameters for a project backend.
