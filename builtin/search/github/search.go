@@ -40,7 +40,7 @@ func searchRepositories(ctx context.Context, c Client, query string, numDesiredR
 		p, err := githubProject.Factory(ctx, &project.BackendConfig{
 			Name:           repo.GetFullName(),
 			Version:        version,
-			SourceLocation: getCloneURL(repo),
+			SourceLocation: getCloneURL(&repo),
 		})
 		if err != nil {
 			continue
@@ -77,7 +77,7 @@ func searchCode(ctx context.Context, c Client, query string, numDesiredResults i
 		p, err := githubProject.Factory(ctx, &project.BackendConfig{
 			Name:           repo.GetFullName(),
 			Version:        version,
-			SourceLocation: getCloneURL(*repo),
+			SourceLocation: getCloneURL(repo),
 		})
 		if err != nil {
 			return res, resp, err
@@ -134,14 +134,19 @@ func getLatestCommit(ctx context.Context, c Client, repo github.Repository) (*gi
 	return commits[0], nil
 }
 
-func getCloneURL(repo github.Repository) string {
+type URLRetriever interface {
+	GetCloneURL() string
+	GetHTMLURL() string
+}
+
+func getCloneURL(r URLRetriever) string {
 	var url string
-	if u := repo.GetCloneURL(); u != "" {
+	if u := r.GetCloneURL(); u != "" {
 		url = u
 	}
 
 	if url == "" {
-		if u := repo.GetHTMLURL(); u != "" {
+		if u := r.GetHTMLURL(); u != "" {
 			url = fmt.Sprintf("%s.git", u)
 		}
 	}
