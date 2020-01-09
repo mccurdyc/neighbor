@@ -21,7 +21,7 @@ import (
 	"github.com/mccurdyc/neighbor/sdk/search"
 )
 
-const projectDir = "_external_project"
+const neighborDir = "_external_projects"
 
 func main() {
 	fp := flag.String("file", "", "Absolute filepath to the config file.")
@@ -72,7 +72,7 @@ func main() {
 		glog.Exitf("failed to get working directory: %+v", err)
 	}
 
-	err = os.Mkdir(projectDir, os.ModePerm)
+	err = os.Mkdir(neighborDir, os.ModePerm)
 	if err != nil {
 		glog.Exitf("failed to create project directory: %+v", err)
 	}
@@ -119,7 +119,7 @@ func main() {
 	}
 
 	for _, p := range projects {
-		dir := filepath.Join(workingDir, projectDir, p.Name())
+		dir := filepath.Join(workingDir, neighborDir, p.Name())
 		err := gitClone.Retrieve(ctx, p.SourceLocation(), dir)
 		if err != nil {
 			glog.Errorf("error retrieving project ('%s): %+v", p.Name(), err)
@@ -133,7 +133,7 @@ func main() {
 	}
 
 	if *clean {
-		err := os.RemoveAll(projectDir)
+		err := os.RemoveAll(neighborDir)
 		if err != nil {
 			glog.Errorf("error cleaning up: %+v", err)
 		}
