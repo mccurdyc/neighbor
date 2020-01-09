@@ -18,7 +18,7 @@ func Factory(ctx context.Context, conf *project.BackendConfig) (project.Backend,
 		return nil, fmt.Errorf("source location cannot be empty")
 	}
 
-	return Backend{
+	return &Backend{
 		name:           conf.Name,
 		version:        conf.Version,
 		sourceLocation: conf.SourceLocation,
@@ -36,35 +36,35 @@ type Backend struct {
 }
 
 // Name returns the name associated with a GitHub project.
-func (b Backend) Name() string {
+func (b *Backend) Name() string {
 	return b.name
 }
 
 // Version returns the version of the observed GitHub project (e.g., commit hash, semantic version, etc.).
-func (b Backend) Version() string {
+func (b *Backend) Version() string {
 	return b.version
 }
 
 // RetrievalFunc is the retrieval function that should be used to retrieve the project from GitHub.
 // An example retrieval function could be Git.
-func (b Backend) RetrievalFunc() retrieval.Backend {
+func (b *Backend) RetrievalFunc() retrieval.Backend {
 	return b.retrievalFunc
 }
 
 // SourceLocation is the source location, i.e., where the project was discovered (e.g., GitHub).
-func (b Backend) SourceLocation() string {
+func (b *Backend) SourceLocation() string {
 	return b.sourceLocation
 }
 
 // LocalLocation is the location on disk or where the project can be found in order
 // to perform and evaluation or analysis of the project.
-func (b Backend) LocalLocation() string {
+func (b *Backend) LocalLocation() string {
 	return b.localLocation
 }
 
 // SetLocalLocation sets the local or on-disk location.
-func (b Backend) SetLocalLocation(l string) project.Backend {
-	return Backend{
+func (b *Backend) SetLocalLocation(l string) project.Backend {
+	return &Backend{
 		name:           b.Name(),
 		retrievalFunc:  b.RetrievalFunc(),
 		version:        b.Version(),
