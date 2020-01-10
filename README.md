@@ -7,7 +7,7 @@
 neighbor has importable Go packages (e.g., `builtin/*`, `sdk/*`) and an accompanying
 command-line interface for searching, cloning and executing an arbitrary binary
 against GitHub projects. Abstractions are in place to make doing the aforementioned
-easy and efficient for projects obtained from arbitrary search retrieval methods
+easy and efficient for projects obtained from arbitrary search and retrieval methods
 (i.e., not limited to GitHub Search, repositories or Git clone).
 
 The motivation for neighbor is to provide users (e.g., developers, researchers, etc.)
