@@ -15,7 +15,6 @@ import (
 
 	"github.com/mccurdyc/neighbor/builtin/retrieval/git"
 	"github.com/mccurdyc/neighbor/builtin/search/github"
-	"github.com/mccurdyc/neighbor/pkg/config"
 	"github.com/mccurdyc/neighbor/pkg/runner"
 	"github.com/mccurdyc/neighbor/sdk/retrieval"
 	"github.com/mccurdyc/neighbor/sdk/search"
@@ -56,7 +55,7 @@ func main() {
 		}
 	}()
 
-	cfg := config.New(*fp)
+	cfg := NewCfg(*fp)
 
 	if len(*fp) != 0 {
 		cfg.Parse()
