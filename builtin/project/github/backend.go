@@ -63,7 +63,12 @@ func (b *Backend) LocalLocation() string {
 }
 
 // SetLocalLocation sets the local or on-disk location.
-func (b *Backend) SetLocalLocation(l string) {
-	b.localLocation = l
-	return
+func (b *Backend) SetLocalLocation(l string) project.Backend {
+	return &Backend{
+		name:           b.Name(),
+		retrievalFunc:  b.RetrievalFunc(),
+		version:        b.Version(),
+		sourceLocation: b.SourceLocation(),
+		localLocation:  l,
+	}
 }

@@ -4,26 +4,33 @@
 
 [![Gitter](https://badges.gitter.im/neighborproject/community.svg)](https://gitter.im/neighborproject/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) [![codecov](https://codecov.io/gh/mccurdyc/neighbor/branch/master/graph/badge.svg)](https://codecov.io/gh/mccurdyc/neighbor) [![Maintainability](https://api.codeclimate.com/v1/badges/8b473a645aab19597124/maintainability)](https://codeclimate.com/github/mccurdyc/neighbor/maintainability)
 
+neighbor has importable Go packages (e.g., `builtin/*`, `sdk/*`) and an accompanying
+command-line interface for searching, cloning and executing an arbitrary binary
+against GitHub projects. Abstractions are in place to make doing the aforementioned
+easy and efficient for projects obtained from arbitrary search retrieval methods
+(i.e., not limited to GitHub Search, repositories or Git clone).
 
-neighbor is a Go package and accompanying command-line interface for searching,
-cloning and executing an arbitrary binary against GitHub projects. Abstractions
-are in place to make doing the aforementioned easy and efficient.
-
-The motivation for neighbor is to provide users (e.g., developers and researchers)
-with a way to search, efficiently clone and evaluate projects so that they don't have
-to "roll their own" and can instead focus on the task at hand.
+The motivation for neighbor is to provide users (e.g., developers, researchers, etc.)
+with a way to search, efficiently clone and evaluate projects without having to
+"roll their own". Instead users can focus on the task at hand.
 
 neighbor uses [v3 of GitHub's REST API](https://developer.github.com/v3/).
 
-### How does neighbor save users time?
+### Why neighbor
 
++ Extensibility
+  + Abstract interfaces for projects, search and retrieval functions which means
+  that it is easy to add new "types" or projects (e.g., something other than GitHub
+  repositories) and use other methods for search and retrieval in addition to
+  GitHub search and Git clone, respectively.
 + Abstracting GitHub API interaction (searching, sorting and cloning)
   + Transparent pagination
   + Transparent authentication
   + Transparent rate limit handling
-+ Doing the above efficiently
++ Doing the above efficiently by leveraging Go's concurrent capabilities
 
 ## Requirements
+
 + [Go `1.13+`](https://golang.org/dl/)
   + Why `1.13+`?
     + [Updates to error handling](https://blog.golang.org/go1.13-errors)
@@ -31,29 +38,57 @@ neighbor uses [v3 of GitHub's REST API](https://developer.github.com/v3/).
   + [Installing Go documentation](https://golang.org/doc/install)
 
 ## Getting Started
+
 1. Installing the project
 
     `go get github.com/mccurdyc/neighbor`
 
-2. Usage
+2. Searching and Evaluating
 
-    Repository Search Example:
-    ```bash
-    make build
-    ./bin/neighbor --query="org:neighbor-projects NOT minikube" --external_command="ls -al"
-    ```
+    First, you should review the [Searching on GitHub](https://help.github.com/en/github/searching-for-information-on-github/searching-on-github) documentation.
 
-    Code Search Example:
+    1. **Repository Search Example**
 
-    _Note: [GitHub requires users to be logged in to search code](https://developer.github.com/v3/search/#search-code).
-    Even in public repositories._
+      ```bash
+      make build
+      ./bin/neighbor --query="org:neighbor-projects NOT minikube" --external_command="ls -al"
+      ```
 
-    ```bash
-    make build
-    ./bin/neighbor --search_type="code" --access_token="abc123" --query="filename:test.py path:/ language:python" --external_command="ls -al"
-    ```
+    2. **Code Search Example**
 
-## Help Menu
+      _Note: [GitHub requires users to be logged in to search code](https://developer.github.com/v3/search/#search-code).
+      Even in public repositories._ Refer to the Code search documentation [here](https://help.github.com/en/github/searching-for-information-on-github/searching-code)
+      for building a query. Code searches are searched elastically and are not
+      guaranteed to return exact matches. Searching code for exact matches is currently
+      in beta and only work on very specific repositories, see [this section in the documentation](https://help.github.com/en/github/searching-for-information-on-github/searching-code-for-exact-matches#searching-code-for-exact-matches)
+
+      It is critical that you read the above documentation because Code search may
+      not behave as you would expect. For example,
+
+      > You can't use the following wildcard characters as part of your search query:
+      ```
+      . , : ; / \ ` ' " = * ! ? # $ & + ^ | ~ < > ( ) { } [ ]
+      ```
+
+      The search will simply ignore these symbols. Additionally, I have found that
+      using [`extension:EXTENSION`](https://help.github.com/en/github/searching-for-information-on-github/searching-code#search-by-file-extension)
+      is more reliable and accurate than [`filename:FILENAME`](https://help.github.com/en/github/searching-for-information-on-github/searching-code#search-by-filename).
+
+      ```bash
+      make build
+      ./bin/neighbor --search_type="code" --access_token="abc123" --query="pkg/errors in:file extension:mod path:/ user:mccurdyc" --external_command="ls -al"
+      ```
+
+3. Confirming
+
+  One way to confirm that you obtained the number of projects that you expected
+  is to run the following:
+
+  ```bash
+  find _external_projects -mindepth 2 -maxdepth 2 | wc -l
+  ```
+
+## Usage
 
 ```bash
 Usage: neighbor (--file=<config-file> | [--search_type="repository"] [--access_token=<github-access-token>] --query=<github-query> --external_command=<command> | --search_type="code" --access_token=<github-access-token> --query=<github-query> --external_command=<command>) [--clean=<[true|false>]
@@ -88,13 +123,6 @@ Usage: neighbor (--file=<config-file> | [--search_type="repository"] [--access_t
         comma-separated list of pattern=N settings for file-filtered logging
 ```
 
-## Executing a Cli Command/Executable Binary
-
-neighbor allows you to specify an executable binary to be run on
-a per-repository basis with **each repository as the working directory**.
-
-Examples can be found in the [examples](./_examples).
-
 ## FAQ
 
 ### What about private repositories?
@@ -116,6 +144,13 @@ as well as access private content (e.g., repositories, gists, etc.).
     ...
   }
   ```
+
+### Executing a Cli Command/Executable Binary
+
+neighbor allows you to specify an executable binary to be run on
+a per-repository basis with **each repository as the working directory**.
+
+Examples can be found in the [examples](./_examples).
 
 ## License
 + [GNU General Public License Version 3](./LICENSE)

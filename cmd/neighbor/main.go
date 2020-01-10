@@ -14,13 +14,14 @@ import (
 	"github.com/golang/glog"
 
 	"github.com/mccurdyc/neighbor/builtin/retrieval/git"
+	"github.com/mccurdyc/neighbor/builtin/search/github"
 	"github.com/mccurdyc/neighbor/pkg/config"
-	"github.com/mccurdyc/neighbor/pkg/github"
 	"github.com/mccurdyc/neighbor/pkg/runner"
 	"github.com/mccurdyc/neighbor/sdk/retrieval"
+	"github.com/mccurdyc/neighbor/sdk/search"
 )
 
-const projectDir = "_external_project"
+const neighborDir = "_external_projects"
 
 func main() {
 	fp := flag.String("file", "", "Absolute filepath to the config file.")
@@ -71,39 +72,57 @@ func main() {
 		glog.Exitf("failed to get working directory: %+v", err)
 	}
 
-	err = os.Mkdir(projectDir, os.ModePerm)
+	err = os.Mkdir(neighborDir, os.ModePerm)
 	if err != nil {
 		glog.Exitf("failed to create project directory: %+v", err)
 	}
 
-	searcher, err := github.NewSearcher(github.Connect(ctx, *tkn), github.SearchType(*searchType))
-	if err != nil {
-		glog.Exitf("error creating searcher: %+v", err)
+	var method uint32
+	switch *searchType {
+	case "repository":
+		method = search.Project
+	case "code":
+		method = search.Code
+	default:
+		glog.Exit("unsupported search type")
 	}
 
-	numDesiredResults := 10 // TODO: read the number of desired results from a config value
-	repositories, err := github.Search(ctx, searcher, *query, github.SearchOptions().WithNumberOfResults(numDesiredResults))
-	if err != nil {
-		glog.Errorf("error searching GitHub: %+v", err)
+	searchConfig := search.BackendConfig{
+		SearchMethod: search.Method(method),
 	}
-
-	var conf = retrieval.BackendConfig{}
 
 	if len(*tkn) != 0 {
-		conf.AuthMethod = "token"
-		conf.Config = map[string]string{"token": *tkn}
+		searchConfig.AuthMethod = "token"
+		searchConfig.Config = map[string]string{"token": *tkn}
 	}
 
-	gitClone, err := git.Factory(ctx, &conf)
+	githubSearch, err := github.Factory(ctx, &searchConfig)
+	if err != nil {
+		glog.Exitf("failed to create GitHub searcher: %+v", err)
+	}
+
+	numDesiredResults := 10 // TODO: make configurable
+	projects, err := githubSearch.Search(context.TODO(), *query, numDesiredResults)
+	if err != nil {
+		glog.Errorf("encountered error while searching GitHub for projects: %+v", err)
+	}
+
+	var retrievalConfig retrieval.BackendConfig
+	if len(*tkn) != 0 {
+		retrievalConfig.AuthMethod = "token"
+		retrievalConfig.Config = map[string]string{"token": *tkn}
+	}
+
+	gitClone, err := git.Factory(ctx, &retrievalConfig)
 	if err != nil {
 		glog.Exitf("error creating Git project retriever: %+v", err)
 	}
 
-	for _, repo := range repositories {
-		dir := filepath.Join(workingDir, projectDir, repo.GetFullName())
-		err := gitClone.Retrieve(ctx, repo.GetCloneURL(), dir)
+	for _, p := range projects {
+		dir := filepath.Join(workingDir, neighborDir, p.Name())
+		err := gitClone.Retrieve(ctx, p.SourceLocation(), dir)
 		if err != nil {
-			glog.Errorf("error retrieving project ('%s): %+v", repo.GetFullName(), err)
+			glog.Errorf("error retrieving project ('%s): %+v", p.Name(), err)
 			continue
 		}
 
@@ -114,7 +133,7 @@ func main() {
 	}
 
 	if *clean {
-		err := os.RemoveAll(projectDir)
+		err := os.RemoveAll(neighborDir)
 		if err != nil {
 			glog.Errorf("error cleaning up: %+v", err)
 		}

@@ -347,10 +347,9 @@ func Test_SetLocalLocation(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			tt.input.backend.SetLocalLocation(tt.input.l)
-			got := tt.input.backend.LocalLocation()
+			got := tt.input.backend.SetLocalLocation(tt.input.l)
 
-			if got != tt.want.value {
+			if got.LocalLocation() != tt.want.value {
 				t.Errorf("SetLocalLocation(%+v): \n\tgot: '%+v'\n\twant: '%+v'", tt.input, got, tt.want.value)
 			}
 		})
