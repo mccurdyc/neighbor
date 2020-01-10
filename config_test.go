@@ -1,12 +1,9 @@
-package config
+package main
 
 import (
-	// stdlib
 	"io"
 	"strings"
 	"testing"
-	// external
-	// internal
 )
 
 func compareContentsFields(a, b Contents) bool {
