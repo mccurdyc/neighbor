@@ -218,11 +218,12 @@ func (m *mockClient) ListCommits(ctx context.Context, owner string, repo string,
 	return m.commits, m.response, m.err
 }
 
-func newMockClient(maxPageSize int, numCommits int, nextPage bool, err error) Client {
+func newMockClient(maxPageSize int, numCommits int, duplicateResults bool, nextPage bool, err error) Client {
 	repos := make([]github.Repository, 0, maxPageSize)
 	codeRes := make([]github.CodeResult, 0, maxPageSize)
 
-	for i := 0; i < maxPageSize; i++ {
+	var i int
+	for len(repos) < maxPageSize {
 		name := strconv.Itoa(i)
 		fullname := fmt.Sprintf("repo/%s", name)
 		cloneURL := fmt.Sprintf("cloneurl%d.git", i)
@@ -242,6 +243,16 @@ func newMockClient(maxPageSize int, numCommits int, nextPage bool, err error) Cl
 			github.CodeResult{
 				Repository: &repo,
 			})
+
+		if duplicateResults {
+			repos = append(repos, repo)
+			codeRes = append(codeRes,
+				github.CodeResult{
+					Repository: &repo,
+				})
+		}
+
+		i++
 	}
 
 	commits := make([]*github.RepositoryCommit, 0, numCommits)
@@ -317,6 +328,7 @@ func Test_Search(t *testing.T) {
 		numCommits        int
 		maxPageSize       int
 		nextPage          bool
+		duplicateResults  bool
 		clientErr         error
 	}
 
@@ -380,6 +392,24 @@ func Test_Search(t *testing.T) {
 			},
 		},
 
+		"code_search_deduplicate": {
+			input: input{
+				backend: &Backend{
+					searchMethod: search.Code,
+				},
+				maxPageSize:       3,
+				numDesiredResults: 5,
+				numCommits:        2,
+				clientErr:         nil,
+				nextPage:          true,
+				duplicateResults:  true,
+			},
+			want: want{
+				projectsFn: generateWantProjects,
+				err:        nil,
+			},
+		},
+
 		"less_than_desired": {
 			input: input{
 				backend: &Backend{
@@ -417,7 +447,7 @@ func Test_Search(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			tt.input.backend.githubClient = newMockClient(tt.input.maxPageSize, tt.input.numCommits, tt.input.nextPage, tt.input.clientErr)
+			tt.input.backend.githubClient = newMockClient(tt.input.maxPageSize, tt.input.numCommits, tt.input.duplicateResults, tt.input.nextPage, tt.input.clientErr)
 
 			if tt.want.projectsFn == nil {
 				t.Fatal("Search(): a want project generation function is required")
