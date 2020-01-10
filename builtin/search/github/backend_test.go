@@ -222,8 +222,7 @@ func newMockClient(maxPageSize int, numCommits int, duplicateResults bool, nextP
 	repos := make([]github.Repository, 0, maxPageSize)
 	codeRes := make([]github.CodeResult, 0, maxPageSize)
 
-	var i int
-	for len(repos) < maxPageSize {
+	for i := 0; i < maxPageSize; i++ {
 		name := strconv.Itoa(i)
 		fullname := fmt.Sprintf("repo/%s", name)
 		cloneURL := fmt.Sprintf("cloneurl%d.git", i)
@@ -251,8 +250,6 @@ func newMockClient(maxPageSize int, numCommits int, duplicateResults bool, nextP
 					Repository: &repo,
 				})
 		}
-
-		i++
 	}
 
 	commits := make([]*github.RepositoryCommit, 0, numCommits)
@@ -392,7 +389,7 @@ func Test_Search(t *testing.T) {
 			},
 		},
 
-		"code_search_deduplicate": {
+		"code_search_duplicate_results": {
 			input: input{
 				backend: &Backend{
 					searchMethod: search.Code,
