@@ -9,8 +9,6 @@ jobs:
     steps:
       - checkout
 
-      - run: go get -v -t -d ./...
-      - run: go fmt ./...
-      - run: go build cmd/neighbor/main.go
+      - run: make build
       - run: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
       - run: bash <(curl -s https://codecov.io/bash)
