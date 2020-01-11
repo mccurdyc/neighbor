@@ -1,15 +1,12 @@
-package config
+package main
 
 import (
-	// stdlib
 	"encoding/json"
 	"io"
 	"io/ioutil"
 	"os"
 
-	// external
 	"github.com/golang/glog"
-	// internal
 )
 
 // Contents contains the contents of the parsed config file.
@@ -27,8 +24,8 @@ type Config struct {
 	Contents *Contents
 }
 
-// New is a constructor that returns a pointer to a Config object.
-func New(fp string) *Config {
+// NewCfg is a constructor that returns a pointer to a Config object.
+func NewCfg(fp string) *Config {
 	return &Config{
 		FilePath: fp,
 	}
