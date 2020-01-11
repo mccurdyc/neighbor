@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 
@@ -14,29 +15,32 @@ import (
 )
 
 func Factory(ctx context.Context, conf *run.BackendConfig) (run.Backend, error) {
-	if len(conf.Name) == 0 {
-		return nil, fmt.Errorf("name of command cannot be nil")
+	if len(conf.Cmd) == 0 {
+		return nil, fmt.Errorf("command cannot be nil")
 	}
 
+	cmd := strings.SplitN(conf.Cmd, " ", 2)
 	var args []string
-	if len(conf.Args) > 0 {
-		args = parseArgs(conf.Args)
+	if len(cmd) > 1 {
+		args = parseArgs(cmd[1])
 	}
 
-	if len(conf.Dir) == 0 {
-		return nil, fmt.Errorf("working directory cannot be nil")
+	_, err := exec.LookPath(cmd[0])
+	if err != nil {
+		return nil, fmt.Errorf("failed to find command: %+v", err)
 	}
 
 	return &Backend{
-		name:   conf.Name,
+		cmd:    conf.Cmd,
+		name:   cmd[0],
 		args:   args,
-		dir:    conf.Dir,
 		stdout: conf.Stdout,
 		stderr: conf.Stderr,
 	}, nil
 }
 
 type Backend struct {
+	cmd    string
 	name   string
 	args   []string
 	dir    string
@@ -44,14 +48,23 @@ type Backend struct {
 	stderr io.Writer
 }
 
-func (b *Backend) Run() error {
-	cmd := exec.Command(b.name)
-	if len(b.args) > 1 {
-		cmd = exec.Command(b.name, b.args...)
+func (b *Backend) Run(ctx context.Context, dir string) error {
+	if len(dir) == 0 {
+		return fmt.Errorf("working directory must be specified")
 	}
 
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	err := os.Chdir(dir)
+	if err != nil {
+		return fmt.Errorf("failed to change to the specified working directory (%s): %+v", dir, err)
+	}
+
+	cmd := exec.CommandContext(ctx, b.name)
+	if len(b.args) > 1 {
+		cmd = exec.CommandContext(ctx, b.name, b.args...)
+	}
+
+	cmd.Stdout = b.stdout
+	cmd.Stderr = b.stderr
 
 	return cmd.Run()
 }
