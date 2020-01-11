@@ -43,7 +43,6 @@ type Backend struct {
 	cmd    string
 	name   string
 	args   []string
-	dir    string
 	stdout io.Writer
 	stderr io.Writer
 }
