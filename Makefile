@@ -1,8 +1,17 @@
+GO_VERSION_MIN=1.13.0
+GO_CMD?=go
+CGO_ENABLED?=0
+
+# Inpired by hashicorp/vault
+# https://github.com/hashicorp/vault/blob/master/Makefile
+TEST?=$$($(GO_CMD) list ./...)
+GOFMT_FILES?=$$(find . -name '*.go')
+
 build:
-	go fmt ./...
-	GO111MODULE=on go build -race -o bin/neighbor cmd/neighbor/main.go
+	$(GO_CMD) fmt ./...
+	$(GO_CMD) build -race -o bin/neighbor *.go
 
 test:
-	GO111MODULE=on go test -v ./...
+	$(GO_CMD) test -v $(TEST)
 
 .PHONY: build test
