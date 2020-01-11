@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"regexp"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -170,18 +169,5 @@ func parseArgs(rest string) []string {
 		}
 	}
 
-	return cleanWords(words)
-}
-
-const lineEscapedRegex = `\"|'`
-
-func cleanWords(ws []string) []string {
-	re := regexp.MustCompile(lineEscapedRegex)
-	cleaned := make([]string, len(ws), cap(ws))
-
-	for i := range ws {
-		cleaned[i] = re.ReplaceAllLiteralString(ws[i], "")
-	}
-
-	return cleaned
+	return words
 }
