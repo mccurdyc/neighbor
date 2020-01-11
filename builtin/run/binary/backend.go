@@ -26,7 +26,7 @@ func Factory(ctx context.Context, conf *run.BackendConfig) (run.Backend, error) 
 
 	_, err := exec.LookPath(cmd[0])
 	if err != nil {
-		return nil, fmt.Errorf("failed to find command: %+v", err)
+		return nil, fmt.Errorf("failed to find command: '%+v'", err)
 	}
 
 	return &Backend{
@@ -57,7 +57,7 @@ func (b *Backend) Run(ctx context.Context, dir string) error {
 	}
 
 	cmd := exec.CommandContext(ctx, b.name)
-	if len(b.args) > 1 {
+	if len(b.args) >= 1 {
 		cmd = exec.CommandContext(ctx, b.name, b.args...)
 	}
 

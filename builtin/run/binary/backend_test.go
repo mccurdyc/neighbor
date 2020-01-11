@@ -2,6 +2,7 @@ package binary
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -22,6 +23,30 @@ func Test_Factory(t *testing.T) {
 		input input
 		want  want
 	}{
+		"empty_cmd": {
+			input: input{
+				&run.BackendConfig{
+					Cmd: "",
+				},
+			},
+			want: want{
+				backend: nil,
+				err:     fmt.Errorf("command cannot be nil"),
+			},
+		},
+
+		"executable_not_found": {
+			input: input{
+				&run.BackendConfig{
+					Cmd: "12345678900987654321",
+				},
+			},
+			want: want{
+				backend: nil,
+				err:     fmt.Errorf(`failed to find command: 'exec: "12345678900987654321": executable file not found in $PATH'`),
+			},
+		},
+
 		"cmd_in_path": {
 			input: input{
 				&run.BackendConfig{
@@ -38,7 +63,23 @@ func Test_Factory(t *testing.T) {
 			},
 		},
 
-		"cmd_with_args": {
+		"cmd_with_single_arg": {
+			input: input{
+				&run.BackendConfig{
+					Cmd: "ls -al",
+				},
+			},
+			want: want{
+				backend: &Backend{
+					cmd:  "ls -al",
+					name: "ls",
+					args: []string{"-al"},
+				},
+				err: nil,
+			},
+		},
+
+		"cmd_with_multiple_args": {
 			input: input{
 				&run.BackendConfig{
 					Cmd: "go test $(go list ./...) | grep \"FAIL\"",
