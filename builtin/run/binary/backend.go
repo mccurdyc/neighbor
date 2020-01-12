@@ -13,6 +13,7 @@ import (
 	"github.com/mccurdyc/neighbor/sdk/run"
 )
 
+// Factory is a factory function for creating a run backend that can run binary commands.
 func Factory(ctx context.Context, conf *run.BackendConfig) (run.Backend, error) {
 	if len(conf.Cmd) == 0 {
 		return nil, fmt.Errorf("command cannot be nil")
@@ -38,6 +39,7 @@ func Factory(ctx context.Context, conf *run.BackendConfig) (run.Backend, error) 
 	}, nil
 }
 
+// Backend is a run.Backend for running binary commands.
 type Backend struct {
 	cmd    string
 	name   string
@@ -46,6 +48,7 @@ type Backend struct {
 	stderr io.Writer
 }
 
+// Run is a method for running binary commands.
 func (b *Backend) Run(ctx context.Context, dir string) error {
 	if len(dir) == 0 {
 		return fmt.Errorf("working directory must be specified")
