@@ -51,10 +51,16 @@ func (b *Backend) Run(ctx context.Context, dir string) error {
 		return fmt.Errorf("working directory must be specified")
 	}
 
-	err := os.Chdir(dir)
+	currDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("failed to change to the specified working directory (%s): %+v", dir, err)
+		return fmt.Errorf("failed to get current working directory: %+v", err)
 	}
+
+	err = os.Chdir(dir)
+	if err != nil {
+		return fmt.Errorf("failed to change to the specified directory (%s): %+v", dir, err)
+	}
+	defer os.Chdir(currDir)
 
 	cmd := exec.CommandContext(ctx, b.name)
 	if len(b.args) >= 1 {

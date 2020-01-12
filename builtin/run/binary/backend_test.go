@@ -144,3 +144,67 @@ func compareBackend(t *testing.T, want *Backend, got run.Backend) {
 		t.Errorf("Factory() mismatched args (-want +got):\n%s", diff)
 	}
 }
+
+func Test_Run(t *testing.T) {
+	type input struct {
+		backend *Backend
+		dir     string
+	}
+
+	type want struct {
+		err error
+	}
+
+	var tests = map[string]struct {
+		input input
+		want  want
+	}{
+		"empty_dir": {
+			input: input{
+				backend: &Backend{name: "ls", args: []string{"-al"}},
+				dir:     "",
+			},
+			want: want{
+				err: fmt.Errorf("working directory must be specified"),
+			},
+		},
+
+		"cmd_no_args": {
+			input: input{
+				backend: &Backend{name: "ls"},
+				dir:     "./testdata/",
+			},
+			want: want{
+				err: nil,
+			},
+		},
+
+		"cmd_with_one_arg": {
+			input: input{
+				backend: &Backend{name: "ls", args: []string{"-al"}},
+				dir:     "./testdata/",
+			},
+			want: want{
+				err: nil,
+			},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			gotErr := tt.input.backend.Run(context.TODO(), tt.input.dir)
+
+			// https://github.com/google/go-cmp/issues/24
+			errorCmp := func(x, y error) bool {
+				if x == nil || y == nil {
+					return x == nil && y == nil
+				}
+				return x.Error() == y.Error()
+			}
+
+			if ok := errorCmp(gotErr, tt.want.err); !ok {
+				t.Errorf("Run() \n\tgotErr: '%+v'\n\twantErr: '%+v'", gotErr, tt.want.err)
+			}
+		})
+	}
+}
