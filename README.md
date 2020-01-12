@@ -79,6 +79,18 @@ neighbor uses [v3 of GitHub's REST API](https://developer.github.com/v3/).
       ./bin/neighbor --search_type="code" --access_token="abc123" --query="pkg/errors in:file extension:mod path:/ user:mccurdyc" --external_command="ls -al"
       ```
 
+    3. **Multi-Line Command Example**
+
+      Multi-line commands work, but **pipes (i.e., `|`) do not**. In order to use pipes,
+      you should create a custom binary that handles piping the output from one command
+      to the next (e.g., ["How to pipe several comands in Go?" on StackOverflow](https://stackoverflow.com/questions/10781516/how-to-pipe-several-commands-in-go))
+
+      ```bash
+      make build
+      ./bin/neighbor --search_type="code" --access_token="abc123" --query="pkg/errors in:file extension:mod path:/ user:mccurdyc" --external_command="ls \
+      -al"
+      ```
+
 3. Confirming
 
   One way to confirm that you obtained the number of projects that you expected

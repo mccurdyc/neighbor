@@ -5,18 +5,17 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path/filepath"
-	"strings"
 	"syscall"
 
 	"github.com/golang/glog"
 
 	"github.com/mccurdyc/neighbor/builtin/retrieval/git"
+	"github.com/mccurdyc/neighbor/builtin/run/binary"
 	"github.com/mccurdyc/neighbor/builtin/search/github"
-	"github.com/mccurdyc/neighbor/pkg/runner"
 	"github.com/mccurdyc/neighbor/sdk/retrieval"
+	"github.com/mccurdyc/neighbor/sdk/run"
 	"github.com/mccurdyc/neighbor/sdk/search"
 )
 
@@ -76,6 +75,15 @@ func main() {
 		glog.Exitf("failed to create project directory: %+v", err)
 	}
 
+	if *clean {
+		defer func() {
+			err := os.RemoveAll(neighborDir)
+			if err != nil {
+				glog.Errorf("error cleaning up: %+v", err)
+			}
+		}()
+	}
+
 	var method uint32
 	switch *searchType {
 	case "repository":
@@ -117,6 +125,15 @@ func main() {
 		glog.Exitf("error creating Git project retriever: %+v", err)
 	}
 
+	cmd, err := binary.Factory(ctx, &run.BackendConfig{
+		Cmd:    *externalCmd,
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+	})
+	if err != nil {
+		glog.Exitf("failed to handle command: %+v", err)
+	}
+
 	for _, p := range projects {
 		dir := filepath.Join(workingDir, neighborDir, p.Name())
 		err := gitClone.Retrieve(ctx, p.SourceLocation(), dir)
@@ -125,32 +142,11 @@ func main() {
 			continue
 		}
 
-		err = runBinary(dir, *externalCmd)
+		err = cmd.Run(ctx, dir)
 		if err != nil {
 			glog.Errorf("failed to run binary command in '%s': %+v", dir, err)
 		}
 	}
-
-	if *clean {
-		err := os.RemoveAll(neighborDir)
-		if err != nil {
-			glog.Errorf("error cleaning up: %+v", err)
-		}
-	}
-}
-
-func runBinary(dir string, command string) error {
-	xc := strings.Split(command, " ")
-
-	cmd := exec.Command(xc[0])
-	if len(xc) > 1 {
-		cmd = exec.Command(xc[0], xc[1:]...)
-	}
-
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	return runner.RunInDir(dir, cmd)
 }
 
 // usage prints the usage and the supported flags.
