@@ -15,7 +15,9 @@ type Contents struct {
 	SearchType  string `json:"search_type"`
 	Query       string `json:"query"`
 
-	ExternalCmdStr string `json:"external_command"`
+	Command      string `json:"command"`
+	ProjectCount int    `json:"project_count"`
+	ResultDir    string `json:"result_directory"`
 }
 
 // Config specifies information about the config file used for performing the experiment.

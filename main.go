@@ -19,21 +19,22 @@ import (
 	"github.com/mccurdyc/neighbor/sdk/search"
 )
 
-const neighborDir = "_external_projects"
-
 func main() {
 	fp := flag.String("file", "", "Absolute filepath to the config file.")
 	tkn := flag.String("access_token", "", "Your personal GitHub access token. This is required to access private repositories and increases rate limits.")
-	searchType := flag.String("search_type", "repository", "The type of GitHub search to perform.")
-	query := flag.String("query", "", "The GitHub search query to execute.")
-	externalCmd := flag.String("external_command", "", "The command to execute on each project returned from the GitHub search query.")
-	clean := flag.Bool("clean", true, "Delete the directory created for each repository after running the external command against the repository.")
+	searchType := flag.String("search_type", "project", "The type of search to perform.")
+	query := flag.String("query", "", "The search query to execute.")
+	command := flag.String("command", "", "The command to execute on each project returned from a search query.")
+	projectsDir := flag.String("projects_directory", "_external_projects", "Where the projects should be stored locally and found for evalutation.")
+	plainRetrieve := flag.Bool("plain_retrieve", false, "Whether projects should just be retrieved and not evaluated.")
+	clean := flag.Bool("clean", true, "Delete the result directory after running the command against every project.")
 	help := flag.Bool("help", false, "Print this help menu.")
 
 	flag.Parse()
 
 	if *help == true ||
-		(*fp == "" && (*query == "" || *externalCmd == "" || *searchType == "")) {
+		(*fp == "" && (*query == "" || *searchType == "")) ||
+		(*plainRetrieve == false && *command == "") {
 		usage()
 		os.Exit(1)
 	}
@@ -62,7 +63,7 @@ func main() {
 		tkn = &cfg.Contents.AccessToken
 		searchType = &cfg.Contents.SearchType
 		query = &cfg.Contents.Query
-		externalCmd = &cfg.Contents.ExternalCmdStr
+		command = &cfg.Contents.Command
 	}
 
 	workingDir, err := os.Getwd()
@@ -70,14 +71,14 @@ func main() {
 		glog.Exitf("failed to get working directory: %+v", err)
 	}
 
-	err = os.Mkdir(neighborDir, os.ModePerm)
+	err = os.Mkdir(*projectsDir, os.ModePerm)
 	if err != nil {
 		glog.Exitf("failed to create project directory: %+v", err)
 	}
 
 	if *clean {
 		defer func() {
-			err := os.RemoveAll(neighborDir)
+			err := os.RemoveAll(*projectsDir)
 			if err != nil {
 				glog.Errorf("error cleaning up: %+v", err)
 			}
@@ -86,7 +87,7 @@ func main() {
 
 	var method uint32
 	switch *searchType {
-	case "repository":
+	case "project":
 		method = search.Project
 	case "code":
 		method = search.Code
@@ -126,7 +127,7 @@ func main() {
 	}
 
 	cmd, err := binary.Factory(ctx, &run.BackendConfig{
-		Cmd:    *externalCmd,
+		Cmd:    *command,
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
 	})
@@ -135,7 +136,7 @@ func main() {
 	}
 
 	for _, p := range projects {
-		dir := filepath.Join(workingDir, neighborDir, p.Name())
+		dir := filepath.Join(workingDir, *projectsDir, p.Name())
 		err := gitClone.Retrieve(ctx, p.SourceLocation(), dir)
 		if err != nil {
 			glog.Errorf("error retrieving project ('%s): %+v", p.Name(), err)
@@ -151,7 +152,7 @@ func main() {
 
 // usage prints the usage and the supported flags.
 func usage() {
-	fmt.Fprint(flag.CommandLine.Output(), "\nUsage: neighbor (--file=<config-file> | --query=<github-query> --external_command=<command>) [--access_token=<github-access-token>] [--search_type=<repository|code>] [--clean=<true|false>]\n\n")
+	fmt.Fprint(flag.CommandLine.Output(), "\nUsage: neighbor (--file=<config-file> | --query=<github-query> (--command=<command> | --plain_retrieve)) [--access_token=<github-access-token>] [--search_type=<repository|code>] [--clean=<true|false>]\n\n")
 	flag.PrintDefaults()
 	fmt.Fprint(flag.CommandLine.Output(), "\n")
 }
