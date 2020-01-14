@@ -190,3 +190,5 @@ Examples can be found in the [examples](./_examples).
 
 ## License
 + [GNU General Public License Version 3](./LICENSE)
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmccurdyc%2Fneighbor.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmccurdyc%2Fneighbor?ref=badge_large)
