@@ -63,7 +63,12 @@ func (b *Backend) Run(ctx context.Context, dir string) error {
 	if err != nil {
 		return fmt.Errorf("failed to change to the specified directory (%s): %+v", dir, err)
 	}
-	defer os.Chdir(currDir)
+	defer func() {
+		err = os.Chdir(currDir)
+		if err != nil {
+			panic("failed to return to parent directory")
+		}
+	}()
 
 	cmd := exec.CommandContext(ctx, b.name)
 	if len(b.args) >= 1 {
