@@ -16,7 +16,7 @@
 [golint-badge]: https://golangci.com/badges/github.com/mccurdyc/neighbor.svg
 [golint-url]: https://golangci.com
 [godoc-badge]: https://godoc.org/github.com/mccurdyc/neighbor?status.svg
-[godoc-url]: https://godoc.org/github.com/mccurdyc/neighbor
+[godoc-url]: https://pkg.go.dev/github.com/mccurdyc/neighbor?tab=overview
 [license-badge]: https://img.shields.io/github/license/mccurdyc/neighbor
 [license-url]: LICENSE
 [codecov-badge]: https://codecov.io/gh/mccurdyc/neighbor/branch/master/graph/badge.svg
