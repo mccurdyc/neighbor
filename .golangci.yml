@@ -70,7 +70,7 @@ linters-settings:
 
     # path to a file containing a list of functions to exclude from checking
     # see https://github.com/kisielk/errcheck#excluding-functions for details
-    exclude: errcheck_excludes.txt
+    exclude: .golangci-errcheck_excludes.txt
 
   funlen:
     lines: 60
