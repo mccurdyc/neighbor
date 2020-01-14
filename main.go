@@ -32,7 +32,7 @@ func main() {
 
 	flag.Parse()
 
-	if *help == true ||
+	if *help ||
 		(*fp == "" && (*query == "" || *externalCmd == "" || *searchType == "")) {
 		usage()
 		os.Exit(1)
@@ -77,7 +77,7 @@ func main() {
 
 	if *clean {
 		defer func() {
-			err := os.RemoveAll(neighborDir)
+			err = os.RemoveAll(neighborDir)
 			if err != nil {
 				glog.Errorf("error cleaning up: %+v", err)
 			}

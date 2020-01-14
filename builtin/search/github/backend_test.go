@@ -175,6 +175,7 @@ func Test_Factory(t *testing.T) {
 	}
 
 	for name, tt := range tests {
+		tt := tt
 		t.Run(name, func(t *testing.T) {
 			got, gotErr := Factory(context.TODO(), tt.input.conf)
 
@@ -443,6 +444,7 @@ func Test_Search(t *testing.T) {
 	}
 
 	for name, tt := range tests {
+		tt := tt
 		t.Run(name, func(t *testing.T) {
 			tt.input.backend.githubClient = newMockClient(tt.input.maxPageSize, tt.input.numCommits, tt.input.duplicateResults, tt.input.nextPage, tt.input.clientErr)
 
@@ -494,25 +496,25 @@ func compareBackend(t *testing.T, name string, want *Backend, got search.Backend
 
 	if got == nil {
 		if want != nil {
-			t.Errorf("Factory() mismatched nil")
+			t.Errorf("%s() mismatched nil", name)
 		}
 		return
 	}
 
 	gotBackend, ok := got.(*Backend)
 	if !ok {
-		t.Errorf("Factory() failed to type convert to search.Backend")
+		t.Errorf("%s() failed to type convert to search.Backend", name)
 	}
 
 	if diff := cmp.Diff(want.auth, gotBackend.auth, cmp.AllowUnexported()); diff != "" {
-		t.Errorf("Factory() mismatched auth (-want +got):\n%s", diff)
+		t.Errorf("%s() mismatched auth (-want +got):\n%s", diff, name)
 	}
 
 	if diff := cmp.Diff(want.searchMethod, gotBackend.searchMethod, cmp.AllowUnexported()); diff != "" {
-		t.Errorf("Factory() mismatched search method (-want +got):\n%s", diff)
+		t.Errorf("%s() mismatched search method (-want +got):\n%s", name, diff)
 	}
 
 	if diff := cmp.Diff(want.searchMethodEntity, gotBackend.searchMethodEntity, cmp.AllowUnexported()); diff != "" {
-		t.Errorf("Factory() mismatched search method entity (-want +got):\n%s", diff)
+		t.Errorf("%s() mismatched search method entity (-want +got):\n%s", name, diff)
 	}
 }

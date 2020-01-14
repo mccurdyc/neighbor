@@ -68,6 +68,7 @@ func Test_Factory(t *testing.T) {
 	}
 
 	for name, tt := range tests {
+		tt := tt
 		t.Run(name, func(t *testing.T) {
 			got, gotErr := Factory(context.TODO(), tt.input.conf)
 
@@ -150,6 +151,7 @@ func Test_Name(t *testing.T) {
 	}
 
 	for name, tt := range tests {
+		tt := tt
 		t.Run(name, func(t *testing.T) {
 			got := tt.input.backend.Name()
 
@@ -186,6 +188,7 @@ func Test_Version(t *testing.T) {
 	}
 
 	for name, tt := range tests {
+		tt := tt
 		t.Run(name, func(t *testing.T) {
 			got := tt.input.backend.Version()
 
@@ -226,6 +229,7 @@ func Test_RetrievalFunc(t *testing.T) {
 	}
 
 	for name, tt := range tests {
+		tt := tt
 		t.Run(name, func(t *testing.T) {
 			got := tt.input.backend.RetrievalFunc()
 
@@ -262,6 +266,7 @@ func Test_SourceLocation(t *testing.T) {
 	}
 
 	for name, tt := range tests {
+		tt := tt
 		t.Run(name, func(t *testing.T) {
 			got := tt.input.backend.SourceLocation()
 
@@ -298,6 +303,7 @@ func Test_LocalLocation(t *testing.T) {
 	}
 
 	for name, tt := range tests {
+		tt := tt
 		t.Run(name, func(t *testing.T) {
 			got := tt.input.backend.LocalLocation()
 
@@ -346,6 +352,7 @@ func Test_SetLocalLocation(t *testing.T) {
 	}
 
 	for name, tt := range tests {
+		tt := tt
 		t.Run(name, func(t *testing.T) {
 			got := tt.input.backend.SetLocalLocation(tt.input.l)
 
