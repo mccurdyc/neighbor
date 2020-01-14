@@ -65,7 +65,7 @@ neighbor uses [v3 of GitHub's REST API](https://developer.github.com/v3/).
 
 1. Installing the project
 
-    `go get github.com/mccurdyc/neighbor`
+    `GOPROXY=https://proxy.golang.org go get github.com/mccurdyc/neighbor@latest`
 
 2. Searching and Evaluating
 
