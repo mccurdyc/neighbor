@@ -3,6 +3,7 @@
 </div>
 
 [![Gitter](https://badges.gitter.im/neighborproject/community.svg)](https://gitter.im/neighborproject/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) [![codecov](https://codecov.io/gh/mccurdyc/neighbor/branch/master/graph/badge.svg)](https://codecov.io/gh/mccurdyc/neighbor) [![Maintainability](https://api.codeclimate.com/v1/badges/8b473a645aab19597124/maintainability)](https://codeclimate.com/github/mccurdyc/neighbor/maintainability)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmccurdyc%2Fneighbor.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmccurdyc%2Fneighbor?ref=badge_shield)
 
 neighbor has importable Go packages (e.g., `builtin/*`, `sdk/*`) and an accompanying
 command-line interface for searching, cloning and executing an arbitrary binary
@@ -166,3 +167,6 @@ Examples can be found in the [examples](./_examples).
 
 ## License
 + [GNU General Public License Version 3](./LICENSE)
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmccurdyc%2Fneighbor.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmccurdyc%2Fneighbor?ref=badge_large)
