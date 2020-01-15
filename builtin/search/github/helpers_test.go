@@ -48,7 +48,7 @@ func Test_pageSize(t *testing.T) {
 	}
 
 	for name, tt := range tests {
-
+		tt := tt
 		t.Run(name, func(t *testing.T) {
 			got := pageSize(tt.input.desired, tt.input.max)
 

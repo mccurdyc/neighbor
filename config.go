@@ -49,13 +49,12 @@ func (cfg *Config) Parse() {
 	}
 
 	cfg.Contents = c
-	return
 }
 
 func parse(f io.Reader, d interface{}) error {
-	b, err := ioutil.ReadAll(f)
+	b, _ := ioutil.ReadAll(f)
 
-	if err = json.Unmarshal(b, d); err != nil {
+	if err := json.Unmarshal(b, d); err != nil {
 		return err
 	}
 

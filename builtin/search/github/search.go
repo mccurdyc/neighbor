@@ -13,11 +13,6 @@ import (
 // https://developer.github.com/v3/#pagination
 const maxPageSize = 100
 
-type searchOptions struct {
-	numDesiredResults int
-	maxPageSize       int
-}
-
 func searchRepositories(ctx context.Context, c Client, query string, numDesiredResults int, opts *github.SearchOptions) ([]project.Backend, *github.Response, error) {
 	res := make([]project.Backend, 0, numDesiredResults)
 
@@ -31,6 +26,7 @@ func searchRepositories(ctx context.Context, c Client, query string, numDesiredR
 	}
 
 	for _, repo := range searchRes.Repositories {
+		repo := repo
 		var version string
 		latest, _ := getLatestCommit(ctx, c, repo)
 		if latest != nil {

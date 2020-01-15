@@ -97,6 +97,7 @@ func Test_Factory(t *testing.T) {
 	}
 
 	for name, tt := range tests {
+		tt := tt
 		t.Run(name, func(t *testing.T) {
 			got, gotErr := Factory(context.TODO(), tt.input.conf)
 
@@ -191,6 +192,7 @@ func Test_Run(t *testing.T) {
 	}
 
 	for name, tt := range tests {
+		tt := tt
 		t.Run(name, func(t *testing.T) {
 			gotErr := tt.input.backend.Run(context.TODO(), tt.input.dir)
 

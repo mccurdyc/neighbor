@@ -51,6 +51,7 @@ func Test_getCloneURL(t *testing.T) {
 	}
 
 	for name, tt := range tests {
+		tt := tt
 		t.Run(name, func(t *testing.T) {
 			r := mockURLRetriever{
 				cloneURL: tt.input.cloneURL,
@@ -124,6 +125,7 @@ func Test_contains(t *testing.T) {
 	}
 
 	for name, tt := range tests {
+		tt := tt
 		t.Run(name, func(t *testing.T) {
 			got := contains(tt.input.projects, tt.input.p)
 

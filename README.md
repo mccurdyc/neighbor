@@ -2,7 +2,31 @@
   <img src="https://github.com/mccurdyc/neighbor/blob/master/docs/imgs/orange-background-logo.png?raw=true"><br>
 </div>
 
-[![Gitter](https://badges.gitter.im/neighborproject/community.svg)](https://gitter.im/neighborproject/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge) [![codecov](https://codecov.io/gh/mccurdyc/neighbor/branch/master/graph/badge.svg)](https://codecov.io/gh/mccurdyc/neighbor) [![Maintainability](https://api.codeclimate.com/v1/badges/8b473a645aab19597124/maintainability)](https://codeclimate.com/github/mccurdyc/neighbor/maintainability)
+[![Build Status][build-badge]][build-url]
+[![GolangCI][golint-badge]][golint-url]
+[![GoDoc][godoc-badge]][godoc-url]
+[![License][license-badge]][license-url]
+[![codecov][codecov-badge]][codecov-url]
+[![Discord chat][discord-badge]][discord-url]
+[![Gitter][gitter-badge]][gitter-url]
+[![Release][release-badge]][release-url]
+
+[build-badge]: https://circleci.com/gh/mccurdyc/neighbor/tree/master.svg?style=svg
+[build-url]: https://circleci.com/gh/mccurdyc/neighbor/tree/master
+[golint-badge]: https://golangci.com/badges/github.com/mccurdyc/neighbor.svg
+[golint-url]: https://golangci.com
+[godoc-badge]: https://godoc.org/github.com/mccurdyc/neighbor?status.svg
+[godoc-url]: https://pkg.go.dev/github.com/mccurdyc/neighbor?tab=overview
+[license-badge]: https://img.shields.io/github/license/mccurdyc/neighbor
+[license-url]: LICENSE
+[codecov-badge]: https://codecov.io/gh/mccurdyc/neighbor/branch/master/graph/badge.svg
+[codecov-url]: https://codecov.io/gh/mccurdyc/neighbor
+[discord-badge]: https://img.shields.io/discord/666244141784498177?logo=discord&label=discord&logoColor=white
+[discord-url]: https://discord.gg/qq9sA7
+[gitter-badge]: https://badges.gitter.im/neighborproject/community.svg
+[gitter-url]: https://gitter.im/neighborproject/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
+[release-badge]: https://img.shields.io/github/release/mccurdyc/neighbor.svg
+[release-url]: https://github.com/mccurdyc/neighbor/releases/latest
 
 neighbor has importable Go packages (e.g., `builtin/*`, `sdk/*`) and an accompanying
 command-line interface for searching, cloning and executing an arbitrary binary
@@ -41,7 +65,7 @@ neighbor uses [v3 of GitHub's REST API](https://developer.github.com/v3/).
 
 1. Installing the project
 
-    `go get github.com/mccurdyc/neighbor`
+    `GOPROXY=https://proxy.golang.org go get github.com/mccurdyc/neighbor@latest`
 
 2. Searching and Evaluating
 
@@ -166,3 +190,5 @@ Examples can be found in the [examples](./_examples).
 
 ## License
 + [GNU General Public License Version 3](./LICENSE)
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmccurdyc%2Fneighbor.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmccurdyc%2Fneighbor?ref=badge_large)

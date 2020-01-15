@@ -32,7 +32,7 @@ func main() {
 
 	flag.Parse()
 
-	if *help == true ||
+	if *help ||
 		(*fp == "" && (*query == "" || *searchType == "")) ||
 		(*plainRetrieve == false && *command == "") {
 		usage()
@@ -78,7 +78,7 @@ func main() {
 
 	if *clean {
 		defer func() {
-			err := os.RemoveAll(*projectsDir)
+			err = os.RemoveAll(*projectsDir)
 			if err != nil {
 				glog.Errorf("error cleaning up: %+v", err)
 			}
