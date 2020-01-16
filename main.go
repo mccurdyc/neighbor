@@ -19,23 +19,47 @@ import (
 	"github.com/mccurdyc/neighbor/sdk/search"
 )
 
-const neighborDir = "_external_projects"
-
 func main() {
 	fp := flag.String("file", "", "Absolute filepath to the config file.")
-	tkn := flag.String("access_token", "", "Your personal GitHub access token. This is required to access private repositories and increases rate limits.")
-	searchType := flag.String("search_type", "repository", "The type of GitHub search to perform.")
-	query := flag.String("query", "", "The GitHub search query to execute.")
-	externalCmd := flag.String("external_command", "", "The command to execute on each project returned from the GitHub search query.")
-	clean := flag.Bool("clean", true, "Delete the directory created for each repository after running the external command against the repository.")
+	tkn := flag.String("auth_token", "", "Your personal GitHub access token. This is required to access private repositories and increases rate limits.")
+	searchType := flag.String("search_type", "project", "The type of search to perform.")
+	query := flag.String("query", "", "The search query to execute.")
+	command := flag.String("command", "", "The command to execute on each project returned from a search query.")
+	projectsDir := flag.String("projects_directory", "_external_projects", "Where the projects should be stored locally and found for evalutation.")
+	numProjects := flag.Int("num_projects", 10, "The number of _desired_ projects to obtain.")
+	plainRetrieve := flag.Bool("plain_retrieve", false, "Whether projects should just be retrieved and not evaluated.")
+	clean := flag.Bool("clean", true, "Delete the projects directory after running the command against each project.")
 	help := flag.Bool("help", false, "Print this help menu.")
 
 	flag.Parse()
 
 	if *help ||
-		(*fp == "" && (*query == "" || *externalCmd == "" || *searchType == "")) {
+		(*fp == "" && (*query == "" || *searchType == "")) {
 		usage()
 		os.Exit(1)
+	}
+
+	cfg := NewCfg(*fp)
+
+	if len(*fp) != 0 {
+		cfg.Parse()
+
+		tkn = &cfg.Contents.AuthToken
+		searchType = &cfg.Contents.SearchType
+		query = &cfg.Contents.Query
+		command = &cfg.Contents.Command
+		numProjects = &cfg.Contents.NumProjects
+		projectsDir = &cfg.Contents.ProjectsDir
+		plainRetrieve = &cfg.Contents.PlainRetrieve
+		clean = &cfg.Contents.Clean
+	}
+
+	if !*plainRetrieve && *command == "" {
+		glog.Exitf("cannot disable `plain_retrieve` and have an empty `command`")
+	}
+
+	if *plainRetrieve && *clean {
+		glog.Exitf("cannot enable `plain_retrieve` and `clean`")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -54,39 +78,23 @@ func main() {
 		}
 	}()
 
-	cfg := NewCfg(*fp)
-
-	if len(*fp) != 0 {
-		cfg.Parse()
-
-		tkn = &cfg.Contents.AccessToken
-		searchType = &cfg.Contents.SearchType
-		query = &cfg.Contents.Query
-		externalCmd = &cfg.Contents.ExternalCmdStr
-	}
-
 	workingDir, err := os.Getwd()
 	if err != nil {
 		glog.Exitf("failed to get working directory: %+v", err)
 	}
 
-	err = os.Mkdir(neighborDir, os.ModePerm)
+	err = os.Mkdir(*projectsDir, os.ModePerm)
 	if err != nil {
 		glog.Exitf("failed to create project directory: %+v", err)
 	}
 
 	if *clean {
-		defer func() {
-			err = os.RemoveAll(neighborDir)
-			if err != nil {
-				glog.Errorf("error cleaning up: %+v", err)
-			}
-		}()
+		defer cleanUp(*projectsDir)
 	}
 
 	var method uint32
 	switch *searchType {
-	case "repository":
+	case "project", "projects":
 		method = search.Project
 	case "code":
 		method = search.Code
@@ -105,11 +113,11 @@ func main() {
 
 	githubSearch, err := github.Factory(ctx, &searchConfig)
 	if err != nil {
+		cleanUp(*projectsDir)
 		glog.Exitf("failed to create GitHub searcher: %+v", err)
 	}
 
-	numDesiredResults := 10 // TODO: make configurable
-	projects, err := githubSearch.Search(context.TODO(), *query, numDesiredResults)
+	projects, err := githubSearch.Search(context.TODO(), *query, *numProjects)
 	if err != nil {
 		glog.Errorf("encountered error while searching GitHub for projects: %+v", err)
 	}
@@ -122,23 +130,32 @@ func main() {
 
 	gitClone, err := git.Factory(ctx, &retrievalConfig)
 	if err != nil {
+		cleanUp(*projectsDir)
 		glog.Exitf("error creating Git project retriever: %+v", err)
 	}
 
-	cmd, err := binary.Factory(ctx, &run.BackendConfig{
-		Cmd:    *externalCmd,
-		Stdout: os.Stdout,
-		Stderr: os.Stderr,
-	})
-	if err != nil {
-		glog.Exitf("failed to handle command: %+v", err)
+	var cmd run.Backend
+	if !*plainRetrieve {
+		cmd, err = binary.Factory(ctx, &run.BackendConfig{
+			Cmd:    *command,
+			Stdout: os.Stdout,
+			Stderr: os.Stderr,
+		})
+		if err != nil {
+			cleanUp(*projectsDir)
+			glog.Exitf("failed to handle command: %+v", err)
+		}
 	}
 
 	for _, p := range projects {
-		dir := filepath.Join(workingDir, neighborDir, p.Name())
+		dir := filepath.Join(workingDir, *projectsDir, p.Name())
 		err := gitClone.Retrieve(ctx, p.SourceLocation(), dir)
 		if err != nil {
 			glog.Errorf("error retrieving project ('%s): %+v", p.Name(), err)
+			continue
+		}
+
+		if *plainRetrieve {
 			continue
 		}
 
@@ -149,9 +166,18 @@ func main() {
 	}
 }
 
+func cleanUp(dir string) {
+	err := os.RemoveAll(dir)
+	// we will always want cleanUp to log this message if it returns an error
+	// that is why it doesn't just return this error to the caller.
+	if err != nil {
+		glog.Errorf("error cleaning up: %+v", err)
+	}
+}
+
 // usage prints the usage and the supported flags.
 func usage() {
-	fmt.Fprint(flag.CommandLine.Output(), "\nUsage: neighbor (--file=<config-file> | --query=<github-query> --external_command=<command>) [--access_token=<github-access-token>] [--search_type=<repository|code>] [--clean=<true|false>]\n\n")
+	fmt.Fprint(flag.CommandLine.Output(), "\nUsage: neighbor (--file=<file> | --query=<string> (--command=<string> | --plain_retrieve)) [--auth_token=<github-access-token>] [--search_type=<repository|code>] [--projects_directory=<string>] [--num_projects=<int>] [--clean=<bool> | --plain_retrieve]\n\n")
 	flag.PrintDefaults()
 	fmt.Fprint(flag.CommandLine.Output(), "\n")
 }

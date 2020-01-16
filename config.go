@@ -11,11 +11,15 @@ import (
 
 // Contents contains the contents of the parsed config file.
 type Contents struct {
-	AccessToken string `json:"access_token"`
-	SearchType  string `json:"search_type"`
-	Query       string `json:"query"`
+	AuthToken  string `json:"auth_token"`
+	SearchType string `json:"search_type"`
+	Query      string `json:"query"`
 
-	ExternalCmdStr string `json:"external_command"`
+	Command       string `json:"command"`
+	NumProjects   int    `json:"num_projects"`
+	ProjectsDir   string `json:"projects_directory"`
+	PlainRetrieve bool   `json:"plain_retrieve"`
+	Clean         bool   `json:"clean"`
 }
 
 // Config specifies information about the config file used for performing the experiment.

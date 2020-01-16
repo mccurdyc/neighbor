@@ -1,6 +1,10 @@
 {
-  "access_token": "1234567890abcdefghijklmnopqrstuvwxyz",
-  "search_type": "repository",
-  "query": "user:mccurdyc language:golang",
-  "external_command": "make test"
+  "auth_token": "yourAccessToken1234567890abcdefghijklmnopqrstuvwxyz",
+  "search_type": "project",
+  "query": "org:neighbor-projects NOT minikube",
+  "command": "ls -al",
+  "num_projects": 11,
+  "projects_directory": "_external_projects",
+  "plain_retrieve": false,
+  "clean": true
 }
