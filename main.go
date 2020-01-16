@@ -166,15 +166,13 @@ func main() {
 	}
 }
 
-func cleanUp(dir string) error {
+func cleanUp(dir string) {
 	err := os.RemoveAll(dir)
 	// we will always want cleanUp to log this message if it returns an error
 	// that is why it doesn't just return this error to the caller.
 	if err != nil {
 		glog.Errorf("error cleaning up: %+v", err)
 	}
-
-	return nil
 }
 
 // usage prints the usage and the supported flags.
