@@ -138,7 +138,7 @@ neighbor uses [v3 of GitHub's REST API](https://developer.github.com/v3/).
 ## Usage
 
 ```bash
-Usage: neighbor (--file=<file> | --query=<string> (--command=<string> | --plain_retrieve)) [--access_token=<github-access-token>] [--search_type=<repository|code>] [--projects_directory=<string>] [--num_projects=<int>] [--clean=<bool> | --plain_retrieve]
+Usage: neighbor (--file=<file> | --query=<string> (--command=<string> | --plain_retrieve)) [--auth_token=<github-access-token>] [--search_type=<repository|code>] [--projects_directory=<string>] [--num_projects=<int>] [--clean=<bool> | --plain_retrieve]
 
   -alsologtostderr
         log to standard error as well as files
