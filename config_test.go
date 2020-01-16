@@ -54,6 +54,7 @@ func Test_parse(t *testing.T) {
 	}
 
 	for name, tt := range tests {
+		tt := tt
 		t.Run(name, func(t *testing.T) {
 			gotErr := parse(tt.input.reader, tt.input.content)
 
