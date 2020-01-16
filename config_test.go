@@ -4,48 +4,73 @@ import (
 	"io"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
-func compareContentsFields(a, b Contents) bool {
-	return a.AccessToken != b.AccessToken ||
-		a.SearchType != b.SearchType ||
-		a.Query != b.Query
-}
-
 func Test_parse(t *testing.T) {
-	cases := []struct {
-		name        string
-		r           io.Reader
-		d           interface{}
-		expected    interface{}
-		expectedErr error
+	type input struct {
+		reader  io.Reader
+		content *Contents
+	}
+
+	type want struct {
+		content Contents
+		err     error
+	}
+
+	var tests = map[string]struct {
+		input input
+		want  want
 	}{
-		{
-			name: "base",
-			r: strings.NewReader(`{
-															"access_token": "123abc",
-															"search_type": "abc",
-															"query": "abc"
+		"all_fields": {
+			input: input{
+				reader: strings.NewReader(`{
+															"auth_token": "123abc",
+															"search_type": "type",
+															"query": "query",
+															"command": "hello",
+															"plain_retrieve": true,
+															"clean": false,
+															"projects_directory": "/hello/there",
+															"num_projects": 11
 														}`),
-			d: &Contents{},
-			expected: Contents{
-				AccessToken: "123abc",
-				SearchType:  "abc",
-				Query:       "abc",
+				content: &Contents{},
 			},
-			expectedErr: nil,
+			want: want{
+				content: Contents{
+					AuthToken:     "123abc",
+					SearchType:    "type",
+					Query:         "query",
+					Command:       "hello",
+					PlainRetrieve: true,
+					Clean:         false,
+					ProjectsDir:   "/hello/there",
+					NumProjects:   11,
+				},
+				err: nil,
+			},
 		},
 	}
 
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			actualErr := parse(c.r, c.d)
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			gotErr := parse(tt.input.reader, tt.input.content)
 
-			switch c.d.(type) {
-			case *Contents:
-				if actualErr != c.expectedErr || compareContentsFields(*c.d.(*Contents), c.expected.(Contents)) {
-					t.Errorf("\n\tACTUAL: %+v\n\tEXPECTED: %+v\n\tACTUAL ERROR: %+v\n\tEXPECTED ERROR: %+v\n", c.d, c.expected, actualErr, c.expectedErr)
+			if diff := cmp.Diff(tt.want.content, *tt.input.content); diff != "" {
+				t.Errorf("parse() mismatch (-want +got):\n%s", diff)
+			}
+
+			// https://github.com/google/go-cmp/issues/24
+			errorCmp := func(x, y error) bool {
+				if x == nil || y == nil {
+					return x == nil && y == nil
 				}
+				return x.Error() == y.Error()
+			}
+
+			if ok := errorCmp(gotErr, tt.want.err); !ok {
+				t.Errorf("parse() \n\tgotErr: '%+v'\n\twantErr: '%+v'", gotErr, tt.want.err)
 			}
 		})
 	}

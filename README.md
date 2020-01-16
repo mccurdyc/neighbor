@@ -36,7 +36,11 @@ easy and efficient for projects obtained from arbitrary search and retrieval met
 
 The motivation for neighbor is to provide users (e.g., developers, researchers, etc.)
 with a way to search, efficiently clone and evaluate projects without having to
-"roll their own". Instead users can focus on the task at hand.
+"roll their own". Instead users can focus on the task at hand. [TODO] Another motivation
+for neighbor is to provide researchers with a standard, reproducible way of obtaining projects.
+In order to guarantee fair comparisons of approaches, rather than "hand-picked"
+projects that reinforce claims. This can be accomplished now via `zip`ping the
+project versions retrieved from a run of neighbor.
 
 neighbor uses [v3 of GitHub's REST API](https://developer.github.com/v3/).
 
@@ -71,14 +75,21 @@ neighbor uses [v3 of GitHub's REST API](https://developer.github.com/v3/).
 
     First, you should review the [Searching on GitHub](https://help.github.com/en/github/searching-for-information-on-github/searching-on-github) documentation.
 
-    1. **Repository Search Example**
+    1. **Plain Retrieve Example**
 
       ```bash
       make build
-      ./bin/neighbor --query="org:neighbor-projects NOT minikube" --external_command="ls -al"
+      ./bin/neighbor --query="org:neighbor-projects NOT minikube" --plain_retrieve --projects_directory="_projects_directory" --num_projects=2 --clean=false
       ```
 
-    2. **Code Search Example**
+    2. **Repository Search Example**
+
+      ```bash
+      make build
+      ./bin/neighbor --query="org:neighbor-projects NOT minikube" --command="ls -al" --projects_directory="_projects_directory" --num_projects=2 --clean=false
+      ```
+
+    3. **Code Search Example**
 
       _Note: [GitHub requires users to be logged in to search code](https://developer.github.com/v3/search/#search-code).
       Even in public repositories._ Refer to the Code search documentation [here](https://help.github.com/en/github/searching-for-information-on-github/searching-code)
@@ -100,10 +111,10 @@ neighbor uses [v3 of GitHub's REST API](https://developer.github.com/v3/).
 
       ```bash
       make build
-      ./bin/neighbor --search_type="code" --access_token="abc123" --query="pkg/errors in:file extension:mod path:/ user:mccurdyc" --external_command="ls -al"
+      ./bin/neighbor --search_type="code" --auth_token="abc123" --query="pkg/errors in:file extension:mod path:/ user:mccurdyc" --command="ls -al"
       ```
 
-    3. **Multi-Line Command Example**
+    4. **Multi-Line Command Example**
 
       Multi-line commands work, but **pipes (i.e., `|`) do not**. In order to use pipes,
       you should create a custom binary that handles piping the output from one command
@@ -111,32 +122,32 @@ neighbor uses [v3 of GitHub's REST API](https://developer.github.com/v3/).
 
       ```bash
       make build
-      ./bin/neighbor --search_type="code" --access_token="abc123" --query="pkg/errors in:file extension:mod path:/ user:mccurdyc" --external_command="ls \
+      ./bin/neighbor --search_type="code" --auth_token="abc123" --query="pkg/errors in:file extension:mod path:/ user:mccurdyc" --command="ls \
       -al"
       ```
 
 3. Confirming
 
-  One way to confirm that you obtained the number of projects that you expected
-  is to run the following:
+    One way to confirm that you obtained the number of projects that you expected
+    is to run the following:
 
-  ```bash
-  find _external_projects -mindepth 2 -maxdepth 2 | wc -l
-  ```
+    ```bash
+    find _external_projects -mindepth 2 -maxdepth 2 | wc -l
+    ```
 
 ## Usage
 
 ```bash
-Usage: neighbor (--file=<config-file> | [--search_type="repository"] [--access_token=<github-access-token>] --query=<github-query> --external_command=<command> | --search_type="code" --access_token=<github-access-token> --query=<github-query> --external_command=<command>) [--clean=<[true|false>]
+Usage: neighbor (--file=<file> | --query=<string> (--command=<string> | --plain_retrieve)) [--access_token=<github-access-token>] [--search_type=<repository|code>] [--projects_directory=<string>] [--num_projects=<int>] [--clean=<bool> | --plain_retrieve]
 
-  -access_token string
-        Your personal GitHub access token. This is required to access private repositories and increases rate limits.
   -alsologtostderr
         log to standard error as well as files
+  -auth_token string
+        Your personal GitHub access token. This is required to access private repositories and increases rate limits.
   -clean
-        Delete the directory created for each repository after running the external command against the repository. (default true)
-  -external_command string
-        The command to execute on each project returned from the GitHub search query.
+        Delete the projects directory after running the command against each project. (default true)
+  -command string
+        The command to execute on each project returned from a search query.
   -file string
         Absolute filepath to the config file.
   -help
@@ -147,10 +158,16 @@ Usage: neighbor (--file=<config-file> | [--search_type="repository"] [--access_t
         If non-empty, write log files in this directory
   -logtostderr
         log to standard error instead of files
+  -num_projects int
+        The number of _desired_ projects to obtain. (default 10)
+  -plain_retrieve
+        Whether projects should just be retrieved and not evaluated.
+  -projects_directory string
+        Where the projects should be stored locally and found for evalutation. (default "_external_projects")
   -query string
-        The GitHub search query to execute.
+        The search query to execute.
   -search_type string
-        The type of GitHub search to perform. (default "repository")
+        The type of search to perform. (default "project")
   -stderrthreshold value
         logs at or above this threshold go to stderr
   -v value
@@ -172,11 +189,11 @@ To read more about GitHub's token authentication, visit [this site](https://help
 Authentication is required to both increase the [GitHub API limitations](https://godoc.org/github.com/google/go-github/github#hdr-Rate_Limiting)
 as well as access private content (e.g., repositories, gists, etc.).
 
-+ Use the `--access_token` command-line argument
++ Use the `--auth_token` command-line argument
 + If using a config file, add the generated token to the file
   ```json
   {
-    "access_token": "yourAccessToken1234567890abcdefghijklmnopqrstuvwxyz",
+    "auth_token": "yourAccessToken1234567890abcdefghijklmnopqrstuvwxyz",
     ...
   }
   ```
