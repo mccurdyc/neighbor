@@ -1,5 +1,5 @@
 {
-  "access_token": "yourAccessToken1234567890abcdefghijklmnopqrstuvwxyz",
+  "auth_token": "yourAccessToken1234567890abcdefghijklmnopqrstuvwxyz",
   "search_type": "project",
   "query": "org:neighbor-projects NOT minikube",
   "command": "ls -al",
