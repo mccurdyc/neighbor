@@ -54,7 +54,7 @@ func main() {
 		clean = &cfg.Contents.Clean
 	}
 
-	if *plainRetrieve == false && *command == "" {
+	if !*plainRetrieve && *command == "" {
 		glog.Exitf("cannot disable `plain_retrieve` and have an empty `command`")
 	}
 
